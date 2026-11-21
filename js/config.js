@@ -23,7 +23,31 @@
     // Nama tabel penyimpanan state aplikasi (lihat SQL di README)
     STATE_TABLE: 'spk_state',
 
-    // Email admin yang dibuat di Supabase → Authentication → Users
-    ADMIN_EMAIL: 'admin@pekutatan.co.id'
+    // Email admin yang dibuat di Supabase → Authentication → Users.
+    // Boleh lebih dari satu. ADMIN_EMAIL dipakai sebagai default di form reset password.
+    ADMIN_EMAIL: 'admin@pekutatan.co.id',
+    ADMIN_EMAILS: [
+      'admin@pekutatan.co.id',
+      'krisnadiskominfo@gmail.com'
+    ],
+
+    // Foto latar cover. Taruh file di assets/images/cover.jpg
+    // (boleh jpg/png/webp). Jika belum ada, latar memakai warna hijau.
+    COVER_IMAGE: './assets/images/cover.jpeg',
+
+    // Foto slideshow di halaman awal. Taruh file di folder assets/images/
+    // dengan nama slide-01.jpg ... slide-08.jpg (boleh jpg/png/webp).
+    // File yang belum ada otomatis dilewati. Bisa juga memakai teks sendiri:
+    // { src: './assets/images/jalan-desa.jpg', text: 'Jalan Desa Pekutatan' }
+    SLIDES: [
+      './assets/images/slide-01.jpeg',
+      './assets/images/slide-02.jpeg',
+      './assets/images/slide-03.jpeg',
+      './assets/images/slide-04.jpeg',
+      './assets/images/slide-05.jpeg',
+      './assets/images/slide-06.jpeg',
+      './assets/images/slide-07.jpeg',
+      './assets/images/slide-08.jpeg'
+    ]
   };
 })(window);

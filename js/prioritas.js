@@ -138,7 +138,7 @@
     });
   }
 
-  App.boot(function () {
+  App.onPage('prioritas', function () {
     const session = App.init({ page: 'prioritas' });
     if (!session) return;
     res = App.compute();

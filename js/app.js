@@ -21,6 +21,7 @@
     file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
     settings: '<path d="M4 6h8M16 6h4M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="14" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+    login: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>',
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
     plus: '<path d="M12 5v14M5 12h14"/>',
     edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
@@ -57,6 +58,33 @@
     { id: 'laporan', href: 'laporan.html', label: 'Laporan', icon: 'file', admin: true },
     { id: 'pengaturan', href: 'pengaturan.html', label: 'Pengaturan', icon: 'settings', admin: true }
   ];
+  const PAGE_FILES = NAV.map(function (n) { return n.id; }).concat(['detail']);
+
+  // ---------- Mode satu halaman (cover → slideshow → section aplikasi) ----------
+  function isSpa() { return !!document.getElementById('site-navbar'); }
+  const pageInitializers = {};
+  const sectionTemplates = {};
+  let currentPage = null;
+  let pageParams = {};
+  let spaReady = false;
+
+  /** Daftarkan renderer section. Di halaman lama (non-SPA) langsung dijalankan lewat boot(). */
+  function registerPage(id, fn) { pageInitializers[id] = fn; }
+  function onPage(id, fn) { if (isSpa()) registerPage(id, fn); else boot(fn); }
+  function getParams() { return pageParams; }
+  /** Ambil parameter dari tautan section (SPA) atau query string (halaman lama). */
+  function getParam(name) {
+    const p = (pageParams || {})[name];
+    if (p !== undefined) return p;
+    const m = new RegExp('[?&]' + name + '=([^&]+)').exec(location.search);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+
+  function cacheTemplates() {
+    document.querySelectorAll('.page-section').forEach(function (s) {
+      if (s.id.indexOf('page-') === 0) sectionTemplates[s.id.slice(5)] = s.innerHTML;
+    });
+  }
 
   // ---------- Helper umum ----------
   function esc(v) {
@@ -80,8 +108,20 @@
       t = setTimeout(function () { fn.apply(ctx, args); }, ms || 200);
     };
   }
-  function $(sel, ctx) { return (ctx || document).querySelector(sel); }
-  function $$(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
+  /** Di mode SPA, pencarian tanpa context diutamakan pada section aktif agar ID sama antar section tidak bentrok. */
+  function activeSection() {
+    return isSpa() && currentPage ? document.getElementById('page-' + currentPage) : null;
+  }
+  function $(sel, ctx) {
+    if (ctx) return ctx.querySelector(sel);
+    const section = activeSection();
+    const found = section && section.querySelector(sel);
+    return found || document.querySelector(sel);
+  }
+  function $$(sel, ctx) {
+    const scope = ctx || activeSection() || document;
+    return Array.prototype.slice.call(scope.querySelectorAll(sel));
+  }
 
   function catBadge(key) {
     const k = root.Data.KATEGORI[key] || root.Data.KATEGORI.sedang;
@@ -163,7 +203,7 @@
       const done = function (val) {
         document.removeEventListener('keydown', onKey);
         document.body.removeChild(wrap);
-        if (!document.querySelector('.modal-backdrop')) document.body.classList.remove('modal-open');
+        if (!document.querySelector('.modal-backdrop:not(.hidden)')) document.body.classList.remove('modal-open');
         resolve(val);
       };
       const onKey = function (e) { if (e.key === 'Escape') done(false); };
@@ -187,6 +227,254 @@
     if (!document.querySelector('.modal-backdrop:not(.hidden)')) document.body.classList.remove('modal-open');
   }
 
+  /** Modal login admin (dipakai pengunjung lewat tombol di navbar). */
+  function openAdminLogin() {
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.innerHTML =
+      '<div class="modal sm" role="dialog" aria-modal="true" aria-labelledby="admin-login-title">' +
+      '<div class="modal-head"><h3 id="admin-login-title">Login Admin</h3>' +
+      '<button type="button" class="btn btn-ghost btn-sm" id="admin-login-close" aria-label="Tutup">' + icon('x', 18) + '</button></div>' +
+      '<form id="form-admin-login" autocomplete="on" novalidate>' +
+      '<div class="modal-body">' +
+      '<p class="muted" style="margin:0 0 16px">Masuk dengan akun admin Supabase untuk mengelola data.</p>' +
+      '<div class="field"><label for="admin-email">Email admin</label>' +
+      '<input type="email" id="admin-email" autocomplete="username" placeholder="Masukkan Email" required></div>' +
+      '<div class="field"><label for="admin-pass">Password</label>' +
+      '<input type="password" id="admin-pass" autocomplete="current-password" required></div>' +
+      '<div class="err" id="admin-login-err" role="alert"></div>' +
+      '</div>' +
+      '<div class="modal-foot" style="justify-content:space-between;flex-wrap:wrap">' +
+      '<button type="button" class="btn btn-ghost btn-sm" id="admin-forgot">Lupa password?</button>' +
+      '<span style="display:flex;gap:10px">' +
+      '<button type="button" class="btn" id="admin-login-cancel">Batal</button>' +
+      '<button type="submit" class="btn btn-primary">Masuk</button></span>' +
+      '</div></form></div>';
+    document.body.appendChild(wrap);
+    document.body.classList.add('modal-open');
+
+    function close() {
+      document.removeEventListener('keydown', onKey);
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      if (!document.querySelector('.modal-backdrop:not(.hidden)')) document.body.classList.remove('modal-open');
+    }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    document.addEventListener('keydown', onKey);
+    $('#admin-login-close', wrap).addEventListener('click', close);
+    $('#admin-login-cancel', wrap).addEventListener('click', close);
+    wrap.addEventListener('click', function (e) { if (e.target === wrap) close(); });
+
+    $('#admin-forgot', wrap).addEventListener('click', function () {
+      const suggested = $('#admin-email', wrap).value.trim() ||
+        ((root.SPK_CONFIG && root.SPK_CONFIG.ADMIN_EMAIL) ? root.SPK_CONFIG.ADMIN_EMAIL : '');
+      const emailAddr = root.prompt('Tautan reset password akan dikirim ke email admin:', suggested);
+      if (!emailAddr) return;
+      if (!root.SPKCloud || !root.SPKCloud.configured()) { toast('Supabase belum dikonfigurasi.', 'err'); return; }
+      root.SPKCloud.resetPassword(emailAddr).then(function (res) {
+        if (res && res.error) throw res.error;
+        toast('Tautan reset password dikirim ke ' + emailAddr + '.');
+      }).catch(function (error) {
+        toast('Gagal mengirim tautan: ' + ((error && error.message) || error), 'err');
+      });
+    });
+
+    const form = $('#form-admin-login', wrap);
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const err = $('#admin-login-err', wrap);
+      err.textContent = '';
+      const emailAddr = $('#admin-email', wrap).value.trim();
+      const pass = $('#admin-pass', wrap).value;
+      if (!emailAddr) { err.textContent = 'Email wajib diisi.'; return; }
+      if (!pass) { err.textContent = 'Password wajib diisi.'; return; }
+      if (!root.SPKCloud || !root.SPKCloud.configured()) {
+        err.textContent = 'Supabase belum dikonfigurasi. Isi URL dan anon key di js/config.js.';
+        return;
+      }
+      const btn = form.querySelector('[type="submit"]');
+      btn.disabled = true;
+      root.SPKCloud.signIn(emailAddr, pass).then(function () {
+        close();
+        if (isSpa()) {
+          renderNavbar(root.Store.getSession());
+          if (currentPage) showPage(currentPage, pageParams, { scroll: false });
+          toast('Login admin berhasil.');
+        } else {
+          location.reload();
+        }
+      }).catch(function (error) {
+        err.textContent = (error && error.message) ? error.message : 'Login gagal. Periksa email dan password.';
+        $('#admin-pass', wrap).select();
+        btn.disabled = false;
+      });
+    });
+
+    setTimeout(function () { $('#admin-email', wrap).focus(); }, 0);
+  }
+
+  // ---------- Navbar (menggantikan sidebar di mode satu halaman) ----------
+  /** Buka/tutup panel menu hamburger (hanya dipakai di layar kecil). */
+  function setNavMenu(open) {
+    const bar = document.getElementById('site-navbar');
+    if (!bar) return;
+    bar.classList.toggle('menu-open', !!open);
+    const btn = document.getElementById('nav-toggle');
+    if (!btn) return;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+    btn.innerHTML = icon(open ? 'x' : 'menu', 22);
+  }
+
+  function renderNavbar(session) {
+    const bar = document.getElementById('site-navbar');
+    if (!bar) return;
+    const isAdmin = !!(session && session.role === 'admin');
+    const links = NAV.filter(function (n) { return !n.admin || isAdmin; }).map(function (n) {
+      return '<button type="button" class="nav-link' + (n.id === currentPage ? ' active' : '') + '" data-page="' + n.id + '">' +
+        icon(n.icon, 18) + '<span>' + esc(n.label) + '</span></button>';
+    }).join('');
+    bar.innerHTML =
+      '<div class="nav-inner">' +
+      '<button type="button" class="nav-brand" id="nav-top" aria-label="Kembali ke cover">' +
+      '<img src="./assets/logo.webp" alt="" width="34" height="34">' +
+      '<span><strong>SPK PEKUTATAN</strong><small>Prioritas Pembangunan Desa</small></span></button>' +
+      '<nav class="nav-links" id="site-nav-links" aria-label="Menu utama">' + links + '</nav>' +
+      '<div class="nav-actions">' +
+      (session ? '<span class="badge ' + (isAdmin ? 'info' : 'plain') + ' nav-role">' + (isAdmin ? 'Admin' : 'Pengunjung') + '</span>' : '') +
+      (isAdmin
+        ? '<button type="button" class="btn btn-sm" id="nav-logout">' + icon('logout', 16) + '<span>Logout</span></button>'
+        : '<button type="button" class="btn btn-sm btn-primary" id="nav-admin-login">' + icon('login', 16) + '<span>Login Admin</span></button>') +
+      '</div>' +
+      '<button type="button" class="hamburger nav-toggle" id="nav-toggle" aria-label="Buka menu" aria-controls="site-nav-links" aria-expanded="false">' + icon('menu', 22) + '</button>' +
+      '</div>';
+
+    bar.onclick = function (e) {
+      if (e.target.closest && e.target.closest('#nav-toggle')) {
+        setNavMenu(!bar.classList.contains('menu-open'));
+        return;
+      }
+      const link = e.target.closest ? e.target.closest('.nav-link') : null;
+      if (link) { setNavMenu(false); showPage(link.getAttribute('data-page')); return; }
+      if (e.target.closest && e.target.closest('#nav-top')) { setNavMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+      if (e.target.closest && e.target.closest('#nav-admin-login')) { setNavMenu(false); openAdminLogin(); return; }
+      if (e.target.closest && e.target.closest('#nav-logout')) { setNavMenu(false); logout(); }
+    };
+  }
+
+  /** Tampilkan satu section aplikasi dan sembunyikan yang lain. */
+  function showPage(page, params, opts) {
+    if (!isSpa()) {
+      const q = params && params.id ? '?id=' + encodeURIComponent(params.id) : '';
+      location.href = './' + page + '.html' + q;
+      return;
+    }
+    opts = opts || {};
+    const node = document.getElementById('page-' + page);
+    if (!node || PAGE_FILES.indexOf(page) < 0) return;
+    const session = root.Store.getSession();
+    const navItem = NAV.filter(function (n) { return n.id === page; })[0];
+
+    if (!session) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('Klik "Lihat data" untuk masuk.', 'warn');
+      return;
+    }
+    if (navItem && navItem.admin && session.role !== 'admin') {
+      toast('Halaman tersebut hanya untuk Admin.', 'warn');
+      return;
+    }
+
+    currentPage = page;
+    pageParams = params || {};
+    document.querySelectorAll('.page-section').forEach(function (s) { s.classList.toggle('active', s === node); });
+    // Kembalikan DOM section ke template agar listener lama tidak menumpuk dan data segar.
+    if (typeof sectionTemplates[page] === 'string') node.innerHTML = sectionTemplates[page];
+    renderNavbar(session);
+    document.title = (navItem ? navItem.label : 'Detail Infrastruktur') + ' · SPK Pekutatan';
+    try {
+      if (pageInitializers[page]) pageInitializers[page]();
+    } catch (err) {
+      console.error('Gagal menampilkan section ' + page, err);
+    }
+    try { sessionStorage.setItem('spk_page', page); } catch (e) { /* abaikan */ }
+    document.body.classList.remove('booting');
+
+    if (opts.scroll !== false) {
+      const target = document.getElementById('app-body');
+      window.scrollTo({
+        top: Math.max(0, target.offsetTop + 2),
+        behavior: opts.instant ? 'auto' : 'smooth'
+      });
+    }
+  }
+
+  /** Alihkan tautan *.html lama ke section di halaman yang sama. */
+  function setupLinkRouting() {
+    document.addEventListener('click', function (e) {
+      const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const m = /^\.\/([\w-]+)\.html(?:\?(.*))?$/.exec(a.getAttribute('href') || '');
+      if (!m || PAGE_FILES.indexOf(m[1]) < 0) return;
+      e.preventDefault();
+      const params = {};
+      (m[2] || '').split('&').filter(Boolean).forEach(function (kv) {
+        const i = kv.indexOf('=');
+        const k = decodeURIComponent(i < 0 ? kv : kv.slice(0, i));
+        params[k] = i < 0 ? '' : decodeURIComponent(kv.slice(i + 1));
+      });
+      showPage(m[1], params);
+    });
+  }
+
+  /** Navbar tersembunyi di cover, muncul sticky setelah cover terlewat. */
+  function setupNavbarReveal() {
+    const sentinel = document.getElementById('nav-sentinel');
+    const bar = document.getElementById('site-navbar');
+    if (!sentinel || !bar || !('IntersectionObserver' in root)) return;
+    const io = new IntersectionObserver(function (entries) {
+      const show = !entries[0].isIntersecting;
+      bar.classList.toggle('visible', show);
+      document.body.classList.toggle('nav-visible', show);
+      if (!show) setNavMenu(false);
+    }, { threshold: 0 });
+    io.observe(sentinel);
+
+    // Tutup panel hamburger saat klik di luar navbar atau menekan Escape.
+    document.addEventListener('click', function (e) {
+      if (!bar.classList.contains('menu-open')) return;
+      if (e.target.closest && e.target.closest('#site-navbar')) return;
+      setNavMenu(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && bar.classList.contains('menu-open')) setNavMenu(false);
+    });
+  }
+
+  /** Footer: tahun otomatis, tautan cepat, dan tombol kembali ke atas. */
+  function setupFooter() {
+    const year = document.getElementById('footer-year');
+    if (year) year.textContent = String(new Date().getFullYear());
+    const top = document.getElementById('footer-to-top');
+    if (top) top.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setNavMenu(false);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.footer-links [data-page]'), function (b) {
+      b.addEventListener('click', function () { showPage(b.getAttribute('data-page')); });
+    });
+  }
+
+  function startSpa() {
+    if (spaReady || !isSpa()) return;
+    spaReady = true;
+    cacheTemplates();
+    setupNavbarReveal();
+    setupLinkRouting();
+    setupFooter();
+    renderNavbar(root.Store.getSession());
+  }
+
   // ---------- Perhitungan AHP terpusat ----------
   function compute() {
     return root.AHP.run(root.Store.getInfra(), root.Store.getCriteria(), root.Data.rawValue);
@@ -202,13 +490,17 @@
       const items = NAV.filter(function (n) { return !n.admin || isAdmin; }).map(function (n) {
         return '<a href="' + n.href + '"' + (n.id === pageId ? ' class="active" aria-current="page"' : '') + '>' + icon(n.icon) + '<span>' + esc(n.label) + '</span></a>';
       }).join('');
+      // Pengunjung melihat "Login Admin" di sidebar; Admin melihat "Logout".
+      const footButton = isAdmin
+        ? '<button type="button" id="btn-logout">' + icon('logout') + '<span>Logout</span></button>'
+        : '<button type="button" id="btn-admin-login">' + icon('login') + '<span>Login Admin</span></button>';
       side.innerHTML =
-        '<div class="sidebar-brand"><img src="./assets/logo.svg" alt="Logo" width="40" height="40">' +
+        '<div class="sidebar-brand"><img src="./assets/logo.webp" alt="Logo" width="40" height="40">' +
         '<div><div class="brand-title">SPK PRIORITAS PEMBANGUNAN</div><div class="brand-sub">Desa Pekutatan</div></div></div>' +
         '<nav class="nav" aria-label="Menu utama"><div class="nav-label">Menu</div>' + items + '</nav>' +
         '<div class="sidebar-foot"><div class="user-card"><div class="avatar">' + (isAdmin ? 'A' : 'P') + '</div>' +
         '<div><div class="user-name">' + esc(session.nama) + '</div><div class="user-role">' + (isAdmin ? 'Admin' : 'Pengunjung') + '</div></div></div>' +
-        '<nav class="nav" style="padding:0"><button type="button" id="btn-logout">' + icon('logout') + '<span>Logout</span></button></nav></div>';
+        '<nav class="nav" style="padding:0">' + footButton + '</nav></div>';
     }
     if (top) {
       const current = NAV.filter(function (n) { return n.id === pageId; })[0];
@@ -232,11 +524,26 @@
 
     const out = document.getElementById('btn-logout');
     if (out) out.addEventListener('click', logout);
+    const adminLogin = document.getElementById('btn-admin-login');
+    if (adminLogin) adminLogin.addEventListener('click', openAdminLogin);
   }
 
   function logout() {
     root.Store.clearSession();
-    const done = function () { location.href = './index.html?logout=1'; };
+    const done = function () {
+      if (isSpa()) {
+        currentPage = null;
+        try {
+          sessionStorage.removeItem('spk_page');
+          sessionStorage.removeItem('spk_reload_page');
+        } catch (e) { /* abaikan */ }
+        renderNavbar(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        toast('Anda telah keluar.');
+        return;
+      }
+      location.href = './index.html?logout=1';
+    };
     if (!root.SPKCloud || !root.SPKCloud.signOut) { done(); return; }
     // Tunggu sesi Supabase benar-benar terhapus sebelum pindah halaman,
     // dengan batas waktu agar logout tidak menggantung saat internet mati.
@@ -273,17 +580,19 @@
    */
   function init(opts) {
     const session = root.Store.getSession();
-    if (!session) { location.replace('./index.html'); return null; }
+    const spa = isSpa();
+    if (!session) { if (!spa) location.replace('./index.html'); return null; }
     if (opts.adminOnly && session.role !== 'admin') {
+      if (spa) { toast('Halaman tersebut hanya untuk Admin.', 'warn'); return null; }
       root.Store.setSession(session);
       location.replace('./dashboard.html?akses=ditolak');
       return null;
     }
-    renderShell(session, opts.page);
+    if (!spa) renderShell(session, opts.page);
     fillIcons();
     document.body.classList.remove('booting');
-    if (!opts.noDemoBanner) demoBanner();
-    if (/[?&]akses=ditolak/.test(location.search)) {
+    if (!opts.noDemoBanner && !spa) demoBanner();
+    if (!spa && /[?&]akses=ditolak/.test(location.search)) {
       toast('Halaman tersebut hanya untuk Admin.', 'warn');
     }
     return session;
@@ -330,9 +639,13 @@
   }
 
   // ---------- Sinkronisasi realtime & boot ----------
-  function isLoginPage() { return !!document.querySelector('.login-page'); }
+  function isLoginPage() { return !isSpa() && !!document.querySelector('.login-page'); }
 
   root.addEventListener('spk:data', function () {
+    if (isSpa() && currentPage) {
+      // Simpan section aktif agar setelah reload pengguna kembali ke tempat semula.
+      try { sessionStorage.setItem('spk_reload_page', currentPage); } catch (e) { /* abaikan */ }
+    }
     if (isLoginPage()) return;
     toast('Data diperbarui oleh Admin. Memuat ulang…', 'warn');
     if (document.body.classList.contains('modal-open')) {
@@ -351,6 +664,13 @@
   root.addEventListener('spk:authlost', function () {
     if (isLoginPage()) return;
     toast('Sesi admin berakhir. Silakan masuk kembali.', 'warn');
+    if (isSpa()) {
+      setTimeout(function () {
+        try { sessionStorage.removeItem('spk_page'); } catch (e) { /* abaikan */ }
+        logout();
+      }, 1200);
+      return;
+    }
     setTimeout(function () { location.href = './index.html?logout=1'; }, 1200);
   });
 
@@ -366,11 +686,13 @@
         if (root.SPKCloud && root.SPKCloud.authReady) tasks.push(root.SPKCloud.authReady());
       } catch (err) {
         console.error('Gagal menyiapkan data:', err);
+        startSpa();
         fn();
         return;
       }
-      Promise.all(tasks).then(function () { fn(); }).catch(function (err) {
+      Promise.all(tasks).then(function () { startSpa(); fn(); }).catch(function (err) {
         console.error('Gagal menyiapkan data:', err);
+        startSpa();
         fn();
       });
     }
@@ -379,7 +701,9 @@
   }
 
   root.App = {
-    boot: boot,
+    boot: boot, isSpa: isSpa, startSpa: startSpa,
+    onPage: onPage, registerPage: registerPage, showPage: showPage, getParams: getParams, param: getParam,
+    renderNavbar: renderNavbar,
     icon: icon, esc: esc, fmtRp: fmtRp, fmtNum: fmtNum, fmt3: fmt3, fmt4: fmt4, fmtDateLong: fmtDateLong,
     debounce: debounce, $: $, $$: $$, catBadge: catBadge, placeholderFoto: placeholderFoto,
     download: download, imageToDataURL: imageToDataURL,

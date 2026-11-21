@@ -10,7 +10,7 @@
 
   const $ = App.$;
 
-  App.boot(function () {
+  App.onPage('pengaturan', function () {
     const session = App.init({ page: 'pengaturan', adminOnly: true, noDemoBanner: true });
     if (!session) return;
 

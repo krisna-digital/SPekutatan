@@ -164,7 +164,7 @@
   function initPage() {
     const session = App.init({ page: 'gis' });
     if (!session) return;
-    const mapEl = document.getElementById('map');
+    const mapEl = App.$('#map');
     if (!leafletReady()) {
       mapEl.innerHTML = '<div class="empty">Pustaka peta (Leaflet) gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.</div>';
       return;
@@ -185,7 +185,7 @@
     }).addTo(map);
 
     // Pilihan filter jenis
-    const jenisSel = document.getElementById('f-jenis');
+    const jenisSel = App.$('#f-jenis');
     jenisSel.innerHTML = '<option value="">Semua jenis</option>' +
       Data.JENIS.map(function (j) { return '<option>' + App.esc(j) + '</option>'; }).join('');
 
@@ -197,7 +197,7 @@
       state.shown = rows.length;
       state.layer = addMarkers(map, rows);
       state.markers = state.layer.markers;
-      document.getElementById('count-line').textContent =
+      App.$('#count-line').textContent =
         'Menampilkan ' + rows.length + ' dari ' + res.alt.length + ' lokasi';
       if (refit) fitTo(map, state.layer.group, rows.length);
     }
@@ -211,7 +211,7 @@
       });
     });
     jenisSel.addEventListener('change', function () { state.jenis = jenisSel.value; draw(true); });
-    document.getElementById('btn-reset-filter').addEventListener('click', function () {
+    App.$('#btn-reset-filter').addEventListener('click', function () {
       state.cats = { tinggi: true, sedang: true, rendah: true };
       state.jenis = ''; jenisSel.value = '';
       App.$$('.chip-toggle').forEach(function (b) { b.setAttribute('aria-pressed', 'true'); });
@@ -221,9 +221,9 @@
     draw(true);
 
     // Fokus ke satu lokasi bila dibuka dari halaman detail (?id=INF-001)
-    const m = /[?&]id=([^&]+)/.exec(location.search);
-    if (m) {
-      const id = decodeURIComponent(m[1]);
+    const focusId = App.param('id');
+    if (focusId) {
+      const id = focusId;
       const mk = state.markers[id];
       if (mk) { map.setView(mk.getLatLng(), 17); mk.openPopup(); }
     }
@@ -236,7 +236,7 @@
     locateMe: locateMe, leafletReady: leafletReady, initPage: initPage
   };
 
-  if (document.body && document.body.getAttribute('data-page') === 'gis') {
-    App.boot(initPage);
+  if (App.isSpa() || (document.body && document.body.getAttribute('data-page') === 'gis')) {
+    App.onPage('gis', initPage);
   }
 })(window);

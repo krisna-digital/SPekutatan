@@ -8,17 +8,16 @@
 (function () {
   'use strict';
 
-  App.boot(function () {
+  App.onPage('detail', function () {
     const session = App.init({ page: 'infrastruktur' });
     if (!session) return;
-    const root = document.getElementById('d-root');
-    const m = /[?&]id=([^&]+)/.exec(location.search);
-    const id = m ? decodeURIComponent(m[1]) : '';
+    const root = App.$('#d-root');
+    const id = App.param('id');
     const res = App.compute();
     const r = res.byId[id];
 
     if (!r) {
-      document.getElementById('d-title').textContent = 'Data tidak ditemukan';
+      App.$('#d-title').textContent = 'Data tidak ditemukan';
       root.innerHTML = '<div class="card"><div class="empty">' + App.icon('search', 36) +
         'Usulan dengan ID "' + App.esc(id) + '" tidak ditemukan. Mungkin sudah dihapus.<br><br>' +
         '<a class="btn btn-primary" href="./infrastruktur.html">Kembali ke Data Infrastruktur</a></div></div>';
@@ -27,10 +26,10 @@
 
     const it = r.item;
     document.title = it.nama + ' · SPK Pekutatan';
-    document.getElementById('d-title').innerHTML = App.esc(it.nama) + (it.isDemo ? '<span class="tag-demo">DATA DEMO</span>' : '');
-    document.getElementById('d-map-link').href = './gis.html?id=' + encodeURIComponent(it.id);
+    App.$('#d-title').innerHTML = App.esc(it.nama) + (it.isDemo ? '<span class="tag-demo">DATA DEMO</span>' : '');
+    App.$('#d-map-link').href = './gis.html?id=' + encodeURIComponent(it.id);
     if (session.role === 'admin') {
-      const ed = document.getElementById('d-edit');
+      const ed = App.$('#d-edit');
       ed.href = './infrastruktur.html?edit=' + encodeURIComponent(it.id);
       ed.classList.remove('hidden');
     }
@@ -76,7 +75,7 @@
         '</div>' +
       '</div>';
 
-    const mapEl = document.getElementById('d-map');
+    const mapEl = App.$('#d-map');
     if (GIS.leafletReady()) {
       const map = GIS.createMap(mapEl, { lite: true });
       map.setView([it.lat, it.lng], 16);

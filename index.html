@@ -3,79 +3,477 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Masuk · SPK Prioritas Pembangunan Desa Pekutatan</title>
+  <title>SPK Prioritas Pembangunan Desa Pekutatan</title>
   <meta name="description" content="Sistem Pendukung Keputusan Prioritas Pembangunan Infrastruktur Desa Pekutatan berbasis Web GIS dan metode AHP.">
-  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="./assets/logo.webp" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="./css/style.css">
 </head>
-<body>
-  <div class="login-page">
-    <section class="login-brand" aria-label="Tentang aplikasi">
-      <div>
-        <img src="./assets/logo.svg" alt="Logo aplikasi" width="64" height="64">
-        <h1>SPK PRIORITAS PEMBANGUNAN<br>DESA PEKUTATAN</h1>
+<body class="booting spa" id="top">
+
+  <!-- ============ 1. COVER ============ -->
+  <div class="login-page cover" id="cover">
+    <div class="cover-overlay" aria-hidden="true"></div>
+    <div class="cover-glow" aria-hidden="true"></div>
+
+    <section class="cover-content" aria-label="Tentang aplikasi">
+      <div class="cover-eyebrow">
+        <img src="./assets/logo.webp" alt="Logo aplikasi" width="44" height="44">
+        <span>Sistem Pendukung Keputusan</span>
       </div>
-      <div class="chips" aria-hidden="true">
-        <span class="chip">Metode AHP</span>
-        <span class="chip">Web GIS</span>
-        <span class="chip">Prototype Penelitian</span>
+
+      <h1>SPK PRIORITAS PEMBANGUNAN<br>DESA PEKUTATAN</h1>
+      <p class="cover-desc">Sistem Pendukung Keputusan Prioritas Pembangunan Infrastruktur Desa Pekutatan berbasis Web GIS dan metode AHP.</p>
+
+      <div class="cover-actions" id="landing-actions">
+        <button type="button" class="btn btn-primary btn-cover" id="btn-visitor" disabled>Lihat data</button>
       </div>
-    </section>
 
-    <section class="login-panel">
-      <div class="login-box">
-        <h2>Selamat datang</h2>
-        <p class="muted">Pilih cara masuk untuk melanjutkan.</p>
-
-        <div class="seg" role="tablist" aria-label="Jenis pengguna">
-          <button type="button" role="tab" id="tab-admin" aria-selected="true" aria-controls="pane-admin">Admin</button>
-          <button type="button" role="tab" id="tab-user" aria-selected="false" aria-controls="pane-user">Pengunjung</button>
-        </div>
-
-        <!-- Admin: login Supabase Auth -->
-        <div id="pane-admin" role="tabpanel" aria-labelledby="tab-admin">
-          <form id="form-login" autocomplete="on" novalidate>
-            <div class="field">
-              <label for="login-email">Email admin</label>
-              <input type="email" id="login-email" autocomplete="username" placeholder="Masukkan Email" required>
-            </div>
-            <div class="field">
-              <label for="login-pass">Password</label>
-              <input type="password" id="login-pass" autocomplete="current-password" required>
-              <div class="err" id="login-err" role="alert"></div>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width:100%">Masuk sebagai Admin</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="btn-forgot" style="width:100%">Lupa password?</button>
-          </form>
-
-          <!-- Admin: buat password baru setelah klik tautan reset dari email -->
-          <form id="form-recovery" class="hidden" autocomplete="off" novalidate>
-            <div class="alert alert-info" style="margin:0">
-              <div><strong>Buat password baru</strong><p>Masukkan password baru untuk akun admin Anda.</p></div>
-            </div>
-            <div class="field">
-              <label for="rec-pass">Password baru (min. 6 karakter)</label>
-              <input type="password" id="rec-pass" autocomplete="new-password">
-            </div>
-            <div class="field">
-              <label for="rec-pass2">Ulangi password baru</label>
-              <input type="password" id="rec-pass2" autocomplete="new-password">
-              <div class="err" id="rec-err" role="alert"></div>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width:100%">Simpan password baru</button>
-          </form>
-        </div>
-
-        <!-- Pengunjung -->
-        <div id="pane-user" role="tabpanel" aria-labelledby="tab-user" class="hidden">
-          <button type="button" class="btn btn-primary" id="btn-visitor" style="width:100%">Masuk sebagai Pengunjung</button>
-        </div>
-
-      
+      <!-- Hanya muncul saat membuka tautan reset password dari email -->
+      <div id="pane-recovery" class="cover-admin hidden">
+        <form id="form-recovery" autocomplete="off" novalidate>
+          <div class="alert alert-info" style="margin:0">
+            <div><strong>Buat password baru</strong><p>Masukkan password baru untuk akun admin Anda.</p></div>
+          </div>
+          <div class="field">
+            <label for="rec-pass">Password baru (min. 6 karakter)</label>
+            <input type="password" id="rec-pass" autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="rec-pass2">Ulangi password baru</label>
+            <input type="password" id="rec-pass2" autocomplete="new-password">
+            <div class="err" id="rec-err" role="alert"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">Simpan password baru</button>
+        </form>
       </div>
     </section>
   </div>
 
+  <!-- Navbar muncul setelah cover terlewat saat scroll -->
+  <div class="nav-sentinel" id="nav-sentinel" aria-hidden="true"></div>
+  <header class="site-navbar" id="site-navbar" aria-label="Navigasi utama"></header>
+
+  <!-- ============ 2. SLIDESHOW FOTO ============ -->
+  <section class="slideshow-section" id="slideshow-section" aria-label="Galeri foto Desa Pekutatan">
+    <div class="slideshow-inner">
+      <div class="slideshow-head">
+        <span class="slideshow-eyebrow">Galeri Desa</span>
+        <h2>Foto Kegiatan &amp; Pembangunan Pekutatan</h2>
+        <p>Dokumentasi kondisi dan kegiatan pembangunan infrastruktur di wilayah Desa Pekutatan.</p>
+      </div>
+      <div class="cover-photo-card">
+        <div class="hero-slides" id="hero-slides" aria-roledescription="carousel" aria-label="Foto Desa Pekutatan">
+          <div class="hero-track" id="hero-track"></div>
+          <button type="button" class="hero-nav prev" id="slide-prev" aria-label="Foto sebelumnya">&#8249;</button>
+          <button type="button" class="hero-nav next" id="slide-next" aria-label="Foto berikutnya">&#8250;</button>
+          <div class="hero-dots" id="slide-dots" aria-label="Pilih foto"></div>
+        </div>
+        <p class="cover-caption" id="slide-caption" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 3. HALAMAN / SECTION APLIKASI ============ -->
+  <main class="app-body" id="app-body">
+      <section class="page-section active" id="page-dashboard" data-page="dashboard">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Beranda</span></nav>
+            <h1>Dashboard</h1>
+            <p>Ringkasan prioritas pembangunan infrastruktur Desa Pekutatan.</p>
+          </div>
+          <div id="cr-chip"></div>
+        </div>
+
+        <section class="grid grid-4" aria-label="Ringkasan">
+          <div class="card stat"><div class="stat-ic"><span data-ic="layers" data-size="22"></span></div><div><div class="stat-label">Total Usulan</div><div class="stat-value" id="st-total">0</div></div></div>
+          <div class="card stat"><div class="stat-ic tinggi"><span data-ic="alertcircle" data-size="22"></span></div><div><div class="stat-label">Prioritas Tinggi</div><div class="stat-value" id="st-tinggi">0</div></div></div>
+          <div class="card stat"><div class="stat-ic sedang"><span data-ic="list" data-size="22"></span></div><div><div class="stat-label">Prioritas Sedang</div><div class="stat-value" id="st-sedang">0</div></div></div>
+          <div class="card stat"><div class="stat-ic rendah"><span data-ic="check" data-size="22"></span></div><div><div class="stat-label">Prioritas Rendah</div><div class="stat-value" id="st-rendah">0</div></div></div>
+        </section>
+
+        <section class="grid grid-3-2" style="margin-top:18px">
+          <div class="card">
+            <div class="card-head"><h2>Peta Ringkas Lokasi Pembangunan</h2><a class="btn btn-sm" href="./gis.html">Buka peta penuh</a></div>
+            <div class="card-body"><div id="dash-map" class="map mini-map" aria-label="Peta ringkas"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Distribusi Prioritas</h2></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chart-dist" aria-label="Grafik distribusi prioritas" role="img"></canvas></div></div>
+          </div>
+        </section>
+
+        <section class="grid grid-2" style="margin-top:18px">
+          <div class="card">
+            <div class="card-head"><h2>Jumlah Infrastruktur per Kategori</h2></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chart-jenis" aria-label="Grafik jumlah infrastruktur per jenis" role="img"></canvas></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>5 Prioritas Teratas</h2><a class="btn btn-sm" href="./prioritas.html">Lihat semua</a></div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>#</th><th class="name">Infrastruktur</th><th class="num">Nilai</th><th>Status</th></tr></thead>
+                <tbody id="top-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="page-section" id="page-infrastruktur" data-page="infrastruktur">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Data Infrastruktur</span></nav>
+            <h1>Data Infrastruktur</h1>
+            <p>Daftar usulan pembangunan. Nilai AHP dan ranking dihitung otomatis.</p>
+          </div>
+          <div class="btn-row admin-only hidden">
+            <button type="button" class="btn" id="btn-export"><span data-ic="download" data-size="18"></span> Export Data</button>
+            <button type="button" class="btn" id="btn-import"><span data-ic="upload" data-size="18"></span> Import Data</button>
+            <button type="button" class="btn btn-primary" id="btn-add"><span data-ic="plus" data-size="18"></span> Tambah Data</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <div class="search-box grow"><span data-ic="search" data-size="18"></span><input type="search" id="q" placeholder="Cari nama, banjar, atau jenis..." aria-label="Cari data"></div>
+            <select id="f-fjenis" aria-label="Filter jenis"></select>
+            <select id="f-fkat" aria-label="Filter prioritas">
+              <option value="">Semua prioritas</option>
+              <option value="tinggi">Prioritas Tinggi</option>
+              <option value="sedang">Prioritas Sedang</option>
+              <option value="rendah">Prioritas Rendah</option>
+            </select>
+            <select id="f-fstatus" aria-label="Filter status"></select>
+            <select id="f-sort" aria-label="Urutkan">
+              <option value="rank:asc">Urut: Ranking (1 → n)</option>
+              <option value="final:desc">Urut: Nilai AHP tertinggi</option>
+              <option value="nama:asc">Urut: Nama (A → Z)</option>
+              <option value="biaya:desc">Urut: Biaya terbesar</option>
+              <option value="biaya:asc">Urut: Biaya terkecil</option>
+              <option value="terdampak:desc">Urut: Terdampak terbanyak</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="tbl" style="min-width:1080px">
+              <thead>
+                <tr>
+                  <th class="sortable" data-key="rank">Rank</th>
+                  <th class="sortable name" data-key="nama">Nama Infrastruktur</th>
+                  <th class="sortable" data-key="jenis">Jenis</th>
+                  <th class="sortable" data-key="banjar">Banjar</th>
+                  <th class="sortable" data-key="kondisi">Kondisi</th>
+                  <th class="sortable" data-key="urgensi">Urgensi</th>
+                  <th class="sortable num" data-key="terdampak">Terdampak</th>
+                  <th class="sortable num" data-key="biaya">Biaya</th>
+                  <th class="sortable" data-key="status">Status</th>
+                  <th class="sortable num" data-key="final">Nilai AHP</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="count-line" id="count-line"></div>
+        </div>
+      
+<!-- Modal tambah/edit -->
+  <div id="modal-form" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="form-title">
+    <form class="modal" id="form-infra" novalidate>
+      <div class="modal-head">
+        <h3 id="form-title">Tambah Data Infrastruktur</h3>
+        <button type="button" class="btn btn-ghost btn-icon" data-close aria-label="Tutup"><span data-ic="x"></span></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger hidden" id="form-error" role="alert"></div>
+        <div class="form-grid">
+          <div class="field"><label for="f-id">ID</label><input type="text" id="f-id" readonly></div>
+          <div class="field"><label for="f-status">Status</label><select id="f-status"></select></div>
+
+          <div class="field full"><label for="f-nama">Nama infrastruktur *</label><input type="text" id="f-nama" maxlength="150" autocomplete="off"></div>
+          <div class="field"><label for="f-jenis">Jenis infrastruktur *</label><select id="f-jenis"></select></div>
+          <div class="field"><label for="f-banjar">Banjar *</label><input type="text" id="f-banjar" list="dl-banjar" maxlength="80" autocomplete="off"><datalist id="dl-banjar"></datalist></div>
+          <div class="field full"><label for="f-deskripsi">Deskripsi</label><textarea id="f-deskripsi" maxlength="1000"></textarea></div>
+
+          <div class="field"><label for="f-kondisi">Kondisi (C1)</label><select id="f-kondisi"></select></div>
+          <div class="field"><label for="f-urgensi">Tingkat urgensi (C2)</label><select id="f-urgensi"></select></div>
+          <div class="field"><label for="f-terdampak">Masyarakat terdampak, jiwa (C3)</label><input type="number" id="f-terdampak" min="0" step="1" inputmode="numeric"></div>
+          <div class="field"><label for="f-manfaat">Manfaat pembangunan (C4)</label><select id="f-manfaat"></select></div>
+          <div class="field full"><label for="f-biaya">Estimasi biaya, Rupiah (C5)</label><input type="number" id="f-biaya" min="1" step="1" inputmode="numeric"><span class="hint" id="biaya-hint"></span></div>
+
+          <div class="field full">
+            <span class="field-label">Lokasi: klik peta, geser pin, atau isi koordinat</span>
+            <div id="pick-map" class="map pick-map"></div>
+            <span class="hint">Titik hanya boleh di dalam garis merah batas Desa Pekutatan.</span>
+          </div>
+          <div class="field"><label for="f-lat">Latitude *</label><input type="number" id="f-lat" step="any" inputmode="decimal" placeholder="-8.424120"></div>
+          <div class="field"><label for="f-lng">Longitude *</label><input type="number" id="f-lng" step="any" inputmode="decimal" placeholder="114.843501"></div>
+          <div class="field full"><button type="button" class="btn btn-sm" id="btn-geo" style="align-self:flex-start"><span data-ic="locate" data-size="16"></span> Gunakan lokasi saya</button></div>
+
+          <div class="field full">
+            <span class="field-label">Foto (opsional)</span>
+            <img id="foto-preview" class="detail-photo hidden" alt="Pratinjau foto" style="border-radius:12px;max-height:220px;width:auto">
+            <input type="file" id="f-foto" accept="image/*">
+            <div class="btn-row"><button type="button" class="btn btn-sm hidden" id="btn-foto-remove">Hapus foto</button></div>
+            <span class="hint">Foto dikecilkan otomatis agar muat di penyimpanan browser.</span>
+          </div>
+
+          <div class="field full hidden" id="calc-info">
+            <div class="alert alert-info" style="margin:0"><div><strong id="calc-title"></strong><p>Nilai AHP dan ranking dihitung otomatis dari semua usulan, tidak diisi manual.</p></div></div>
+          </div>
+          <div class="field full"><label class="check"><input type="checkbox" id="f-demo"> Tandai sebagai DATA DEMO</label></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn" data-close>Batal</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+      </section>
+
+      <section class="page-section" id="page-gis" data-page="gis">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Peta GIS</span></nav>
+            <h1>Peta Prioritas Pembangunan</h1>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="filter-bar" role="group" aria-label="Filter peta">
+            <button type="button" class="chip-toggle" data-cat="tinggi" aria-pressed="true"><i style="background:#dc2626"></i>Prioritas Tinggi</button>
+            <button type="button" class="chip-toggle" data-cat="sedang" aria-pressed="true"><i style="background:#f59e0b"></i>Prioritas Sedang</button>
+            <button type="button" class="chip-toggle" data-cat="rendah" aria-pressed="true"><i style="background:#16a34a"></i>Prioritas Rendah</button>
+            <select id="f-jenis" aria-label="Filter jenis infrastruktur" style="width:auto;min-width:180px"></select>
+            <button type="button" class="btn btn-sm" id="btn-reset-filter">Reset filter</button>
+            <span class="muted small" id="count-line" style="margin-left:auto"></span>
+          </div>
+          <div id="map" class="map map-full" aria-label="Peta lokasi pembangunan"></div>
+        </div>
+      </section>
+
+      <section class="page-section" id="page-ahp" data-page="ahp">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Perhitungan AHP</span></nav>
+            <h1>Perhitungan AHP</h1>
+            <p>Atur kriteria dan perbandingan berpasangan. Seluruh tahapan dihitung otomatis oleh JavaScript dan tersimpan di browser.</p>
+          </div>
+          <div class="btn-row"><button type="button" class="btn" id="btn-reset"><span data-ic="reset" data-size="18"></span> Reset ke bawaan</button></div>
+        </div>
+
+        <div id="cr-alert"></div>
+
+        <div class="card">
+          <div class="card-head"><h2>1. Kelola Kriteria</h2></div>
+          <div class="card-body">
+            <p class="muted small">Nama, arah preferensi (benefit/cost), dan keterangan kriteria dapat diubah. Setiap kriteria terhubung ke satu isian pada data infrastruktur.</p>
+            <div id="crit-editor"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>2. Matriks Perbandingan Berpasangan</h2></div>
+          <div class="card-body">
+            <p class="small muted">Baca: kriteria pada <strong>baris</strong> dibandingkan dengan kriteria pada <strong>kolom</strong>. Nilai lebih dari 1 berarti baris lebih penting; pecahan (mis. 1/3) berarti kolom lebih penting. Kolom di bawah diagonal terisi otomatis (kebalikannya). Perubahan langsung dihitung ulang dan disimpan.</p>
+            <div class="table-wrap"><div id="matrix-editor"></div></div>
+            <details style="margin-top:12px">
+              <summary style="cursor:pointer;font-weight:600;min-height:var(--tap);display:flex;align-items:center">Skala perbandingan Saaty</summary>
+              <div class="table-wrap">
+                <table class="table matrix" style="margin-top:6px">
+                  <thead><tr><th>Nilai</th><th>Keterangan</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td style="text-align:left">Sama penting</td></tr>
+                    <tr><td>3</td><td style="text-align:left">Sedikit lebih penting</td></tr>
+                    <tr><td>5</td><td style="text-align:left">Lebih penting</td></tr>
+                    <tr><td>7</td><td style="text-align:left">Sangat lebih penting</td></tr>
+                    <tr><td>9</td><td style="text-align:left">Mutlak lebih penting</td></tr>
+                    <tr><td>2, 4, 6, 8</td><td style="text-align:left">Nilai tengah di antara dua penilaian berdekatan</td></tr>
+                    <tr><td>1/3, 1/5, ...</td><td style="text-align:left">Kebalikan: kriteria kolom lebih penting dari kriteria baris</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <h2 style="margin:26px 0 12px">Proses Perhitungan Bobot Kriteria</h2>
+        <div id="steps"></div>
+
+        <h2 style="margin:26px 0 12px">Perhitungan Nilai Alternatif</h2>
+        <div id="alt-steps"></div>
+      </section>
+
+      <section class="page-section" id="page-prioritas" data-page="prioritas">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Prioritas</span></nav>
+            <h1>Prioritas Pembangunan</h1>
+            <p>Hasil perhitungan AHP, diurutkan dari nilai akhir terbesar. Kategori dibagi tiga bagian sama besar menurut peringkat.</p>
+          </div>
+          <div id="cr-chip"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Grafik Ranking</h2></div>
+          <div class="card-body"><div class="chart-box tall" id="chart-box"><canvas id="chart-rank" role="img" aria-label="Grafik ranking nilai AHP"></canvas></div></div>
+        </div>
+
+        <div class="card">
+          <div class="toolbar">
+            <div class="search-box grow"><span data-ic="search" data-size="18"></span><input type="search" id="q" placeholder="Cari nama, banjar, atau jenis..." aria-label="Cari"></div>
+            <select id="f-kat" aria-label="Filter prioritas">
+              <option value="">Semua prioritas</option>
+              <option value="tinggi">Prioritas Tinggi</option>
+              <option value="sedang">Prioritas Sedang</option>
+              <option value="rendah">Prioritas Rendah</option>
+            </select>
+            <select id="f-jenis" aria-label="Filter jenis"></select>
+            <select id="f-sort" aria-label="Urutkan">
+              <option value="rank:asc">Urut: Ranking (1 → n)</option>
+              <option value="rank:desc">Urut: Ranking (n → 1)</option>
+              <option value="nama:asc">Urut: Nama (A → Z)</option>
+              <option value="jenis:asc">Urut: Jenis</option>
+              <option value="banjar:asc">Urut: Banjar</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="tbl" style="min-width:1100px">
+              <thead id="thead"></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="count-line" id="count-line"></div>
+        </div>
+      </section>
+
+      <section class="page-section" id="page-laporan" data-page="laporan">
+<div class="page-head no-print">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Laporan</span></nav>
+            <h1>Laporan Hasil SPK</h1>
+            <p>Gunakan tombol cetak, lalu pilih "Simpan sebagai PDF" pada dialog cetak browser.</p>
+          </div>
+          <div class="btn-row">
+            <a class="btn" href="./pengaturan.html"><span data-ic="settings" data-size="18"></span> Ubah identitas &amp; periode</a>
+            <button type="button" class="btn btn-primary" id="btn-print"><span data-ic="printer" data-size="18"></span> Cetak Laporan</button>
+          </div>
+        </div>
+
+        <article class="report" id="report" aria-label="Laporan hasil SPK"></article>
+      </section>
+
+      <section class="page-section" id="page-pengaturan" data-page="pengaturan">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Pengaturan</span></nav>
+            <h1>Pengaturan</h1>
+            <p>Identitas laporan, password admin, serta pengelolaan data aplikasi.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="align-items:start">
+          <div class="stack">
+            <section class="card">
+              <div class="card-head"><h2>Identitas Desa &amp; Periode Laporan</h2></div>
+              <form class="card-body" id="form-meta" novalidate>
+                <div class="form-grid">
+                  <div class="field"><label for="m-desa">Desa</label><input type="text" id="m-desa" maxlength="80"></div>
+                  <div class="field"><label for="m-kec">Kecamatan</label><input type="text" id="m-kec" maxlength="80"></div>
+                  <div class="field"><label for="m-kab">Kabupaten</label><input type="text" id="m-kab" maxlength="80"></div>
+                  <div class="field"><label for="m-prov">Provinsi</label><input type="text" id="m-prov" maxlength="80"></div>
+                  <div class="field full"><label for="m-periode">Periode penilaian</label><input type="text" id="m-periode" maxlength="80" placeholder="mis. Tahun Anggaran 2026"></div>
+                  <div class="field full"><label for="m-penyusun">Nama penyusun (untuk tanda tangan laporan)</label><input type="text" id="m-penyusun" maxlength="80"></div>
+                </div>
+                <div class="btn-row" style="margin-top:16px"><button type="submit" class="btn btn-primary">Simpan identitas</button></div>
+              </form>
+            </section>
+
+            <section class="card">
+              <div class="card-head"><h2>Ganti Password Admin</h2></div>
+              <p class="muted small" style="margin:12px 20px 0">Password dikelola Supabase Auth dan berlaku untuk admin di semua perangkat.</p>
+              <form class="card-body" id="form-pass" autocomplete="off" novalidate>
+                <div class="form-grid">
+                  <div class="field full"><label for="p-old">Password saat ini</label><input type="password" id="p-old" autocomplete="current-password"></div>
+                  <div class="field"><label for="p-new">Password baru (min. 6 karakter)</label><input type="password" id="p-new" autocomplete="new-password"></div>
+                  <div class="field"><label for="p-new2">Ulangi password baru</label><input type="password" id="p-new2" autocomplete="new-password"></div>
+                </div>
+                <div class="err" id="p-err" role="alert" style="color:var(--tinggi-fg);margin-top:8px;font-size:.85rem"></div>
+                <div class="btn-row" style="margin-top:12px"><button type="submit" class="btn btn-primary">Ganti password</button></div>
+              </form>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-head"><h2>Manajemen Data</h2></div>
+            <div class="card-body">
+              <div class="setting-row">
+                <div class="info"><strong>Export Data</strong><span class="muted small">Unduh seluruh data usulan, kriteria, bobot, dan identitas sebagai file JSON (cadangan).</span></div>
+                <button type="button" class="btn" id="btn-export"><span data-ic="download" data-size="18"></span> Export JSON</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Import Data</strong><span class="muted small">Pulihkan dari file JSON hasil export. Data saat ini akan diganti; ranking dihitung ulang.</span></div>
+                <button type="button" class="btn" id="btn-import"><span data-ic="upload" data-size="18"></span> Import JSON</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Kembalikan data demo</strong><span class="muted small">Mengganti seluruh data dan kriteria dengan data demo bawaan.</span></div>
+                <button type="button" class="btn" id="btn-demo"><span data-ic="reset" data-size="18"></span> Pulihkan demo</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Kosongkan data usulan</strong><span class="muted small">Menghapus semua usulan agar siap diisi data penelitian. Kriteria dan bobot tetap.</span></div>
+                <button type="button" class="btn btn-danger" id="btn-clear"><span data-ic="trash" data-size="18"></span> Kosongkan</button>
+              </div>
+              <div class="alert alert-info" style="margin:16px 0 0">
+                <div><strong>Penyimpanan di browser</strong><p>Data tersimpan di LocalStorage perangkat ini saja. Gunakan Export secara berkala sebagai cadangan, dan untuk memindahkan data antarperangkat.</p></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="page-section" id="page-detail" data-page="detail">
+<div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><a href="./infrastruktur.html">Data Infrastruktur</a><span class="sep"></span><span aria-current="page">Detail</span></nav>
+            <h1 id="d-title">Detail Infrastruktur</h1>
+          </div>
+          <div class="btn-row">
+            <a class="btn" href="./infrastruktur.html"><span data-ic="arrowleft" data-size="18"></span> Kembali</a>
+            <a class="btn" id="d-map-link" href="./gis.html"><span data-ic="map" data-size="18"></span> Lihat di Peta GIS</a>
+            <a class="btn btn-primary hidden" id="d-edit" href="#"><span data-ic="edit" data-size="18"></span> Edit</a>
+          </div>
+        </div>
+        <div id="d-root"></div>
+      </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-about">
+        <img src="./assets/logo.webp" alt="Logo aplikasi" width="42" height="42">
+        <div>
+          <strong>SPK Prioritas Pembangunan Desa Pekutatan</strong>
+          <p>Sistem Pendukung Keputusan prioritas pembangunan infrastruktur desa berbasis Web GIS dan metode AHP oleh Krisna Digital.</p>
+        </div>
+      </div>
+      <nav class="footer-links" aria-label="Tautan cepat">
+        <button type="button" data-page="dashboard">Dashboard</button>
+        <button type="button" data-page="infrastruktur">Data Infrastruktur</button>
+        <button type="button" data-page="gis">Peta GIS</button>
+        <button type="button" data-page="prioritas">Prioritas</button>
+      </nav>
+      <div class="footer-bottom">
+        <p>&copy; <span id="footer-year">2026</span> Pemerintah Desa Pekutatan. Seluruh hak dilindungi.</p>
+        <button type="button" class="footer-top" id="footer-to-top">Kembali ke atas &uarr;</button>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="./js/config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./js/supabase.js"></script>
@@ -83,6 +481,14 @@
   <script src="./js/ahp.js"></script>
   <script src="./js/storage.js"></script>
   <script src="./js/app.js"></script>
+  <script src="./js/gis.js"></script>
   <script src="./js/login.js"></script>
+  <script src="./js/dashboard.js"></script>
+  <script src="./js/infrastruktur.js"></script>
+  <script src="./js/prioritas.js"></script>
+  <script src="./js/ahp-page.js"></script>
+  <script src="./js/laporan.js"></script>
+  <script src="./js/pengaturan.js"></script>
+  <script src="./js/detail.js"></script>
 </body>
 </html>

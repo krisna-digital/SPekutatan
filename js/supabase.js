@@ -61,10 +61,19 @@
   function isAdmin() { return !!readCache(); }
   function email() { return (readCache() || {}).email || cfg.ADMIN_EMAIL || 'Administrator'; }
 
+  /** Daftar email admin. Bisa lebih dari satu; fallback ke ADMIN_EMAIL bila ADMIN_EMAILS kosong. */
+  function adminEmailList() {
+    const list = Array.isArray(cfg.ADMIN_EMAILS) && cfg.ADMIN_EMAILS.length
+      ? cfg.ADMIN_EMAILS
+      : [cfg.ADMIN_EMAIL];
+    return list.map(function (s) { return String(s || '').trim().toLowerCase(); }).filter(Boolean);
+  }
+
   /** Hanya email yang terdaftar sebagai admin yang diakui sebagai admin. */
   function isAdminEmail(addr) {
-    if (!cfg.ADMIN_EMAIL) return true;
-    return String(addr || '').trim().toLowerCase() === String(cfg.ADMIN_EMAIL).trim().toLowerCase();
+    const list = adminEmailList();
+    if (!list.length) return true; // kompatibilitas: konfigurasi kosong = semua email diakui
+    return list.indexOf(String(addr || '').trim().toLowerCase()) >= 0;
   }
 
   let authReadyPromise = Promise.resolve();

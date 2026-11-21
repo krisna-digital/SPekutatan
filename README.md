@@ -17,6 +17,8 @@ Leaflet dan Chart.js dimuat dari CDN, sehingga perangkat memerlukan koneksi inte
 
 ## Cara menjalankan
 
+Seluruh aplikasi ada di **`index.html`** (satu halaman). File HTML lain (`dashboard.html`, dll.) hanya berfungsi sebagai pengalih ke section yang bersangkutan, jadi tidak perlu dibuka langsung.
+
 Karena memakai path relatif dan tanpa server, ada dua cara:
 
 1. **Langsung**: buka `index.html` di browser. Semua fitur berjalan, tetapi beberapa browser membatasi fitur lokasi (GPS) pada `file://`.
@@ -63,8 +65,14 @@ create policy "spk_read" on public.spk_state
 drop policy if exists "spk_admin_write" on public.spk_state;
 create policy "spk_admin_write" on public.spk_state
   for all to authenticated
-  using (auth.jwt() ->> 'email' = 'admin@peku.local')
-  with check (auth.jwt() ->> 'email' = 'admin@peku.local');
+  using (lower(auth.jwt() ->> 'email') in (
+    'admin@pekutatan.co.id',
+    'krisnadiskominfo@gmail.com'
+  ))
+  with check (lower(auth.jwt() ->> 'email') in (
+    'admin@pekutatan.co.id',
+    'krisnadiskominfo@gmail.com'
+  ));
 
 -- Aktifkan Realtime. Jika muncul pesan "already member", tidak apa-apa.
 do $$
@@ -74,13 +82,19 @@ exception when duplicate_object then null;
 end $$;
 ```
 
-Artinya: **pengunjung (anon) hanya bisa baca**, **hanya email `admin@peku.local` yang bisa menulis**. Password tidak disimpan di tabel ini. Jika Anda memakai email admin lain, ganti dua kemunculan `admin@peku.local` pada SQL di atas **dan** nilai `ADMIN_EMAIL` di `js/config.js` secara bersamaan.
+Artinya: **pengunjung (anon) hanya bisa baca**, **hanya email yang tercantum di `in (...)` yang bisa menulis**. Sekarang ada dua admin: `admin@pekutatan.co.id` dan `krisnadiskominfo@gmail.com`. Password tidak disimpan di tabel ini.
+
+**Penting:** daftar email harus sama di dua tempat:
+1. SQL policy `spk_admin_write` di atas (mengatur siapa yang boleh menulis di database).
+2. `ADMIN_EMAILS` di `js/config.js` (mengatur siapa yang diakui sebagai admin oleh tampilan aplikasi).
+
+Kalau nanti menambah admin lagi, tambahkan email tersebut di **kedua** tempat lalu jalankan ulang SQL policy tersebut.
 
 ### 3. Buat akun admin
 
 1. **Authentication → Providers → Email** pastikan aktif.
 2. **Authentication → Users → Add user → Create new user**.
-3. Masukkan email admin (mis. `admin@peku.local`) dan password, centang **Auto Confirm User**, lalu **Create user**.
+3. Masukkan email admin (`admin@pekutatan.co.id` atau `krisnadiskominfo@gmail.com`) dan password, centang **Auto Confirm User**, lalu **Create user**. Email lain akan ditolak saat login.
 4. Supabase menyimpan password tersebut dalam bentuk **hash** di server. Jangan pernah menulis password apa pun ke `js/config.js`.
 
 Email dan password inilah yang dipakai di halaman `index.html`.
@@ -100,15 +114,17 @@ Email dan password inilah yang dipakai di halaman `index.html`.
 
 ### 6. Isi `js/config.js`
 
-Ganti tiga placeholder dengan nilai dari langkah 3 dan 5:
+Nilai sudah terisi di file ini. Bagian admin sekarang seperti berikut:
 
 ```js
-SUPABASE_URL: 'https://abcdefgh.supabase.co',   // Project URL
-SUPABASE_ANON_KEY: 'eyJhbGciOi...',               // anon public key
-ADMIN_EMAIL: 'admin@peku.local'                   // email admin
+ADMIN_EMAIL: 'admin@pekutatan.co.id',   // default untuk form reset password
+ADMIN_EMAILS: [
+  'admin@pekutatan.co.id',
+  'krisnadiskominfo@gmail.com'
+]
 ```
 
-Biarkan `STATE_TABLE: 'spk_state'` apa adanya.
+Biarkan `SUPABASE_URL`, `SUPABASE_ANON_KEY`, dan `STATE_TABLE` apa adanya. Jangan pernah memasukkan `service_role` key.
 
 ### 7. Deploy dan uji sinkronisasi
 
@@ -122,34 +138,46 @@ Jika data pengunjung tidak berubah: pastikan di **Table Editor → spk_state** a
 
 ```
 /
-├── index.html          Login
-├── dashboard.html      Dashboard
-├── infrastruktur.html  Data infrastruktur (CRUD)
-├── detail.html         Detail satu usulan
-├── gis.html            Peta prioritas (Web GIS)
-├── ahp.html            Proses perhitungan AHP (Admin)
-├── prioritas.html      Hasil ranking + grafik
-├── laporan.html        Laporan cetak/PDF (Admin)
-├── pengaturan.html     Identitas, password, data (Admin)
+├── index.html          SATU HALAMAN: cover → slideshow → semua section aplikasi + navbar
+├── dashboard.html      ┐
+├── infrastruktur.html  │
+├── detail.html         │
+├── gis.html            │ File lama: otomatis mengalihkan ke index.html?page=…
+├── ahp.html            │ (dipertahankan agar tautan/bookmark lama tidak rusak)
+├── prioritas.html      │
+├── laporan.html        │
+├── pengaturan.html     ┘
 ├── css/style.css
 ├── js/
-│   ├── config.js       URL & anon key Supabase (diisi sendiri)
+│   ├── config.js       URL & anon key Supabase, nama foto cover/slideshow
 │   ├── supabase.js     Login, tarik/simpan data, Realtime
-│   ├── data.js         Konstanta, kriteria bawaan, DATA DEMO
+│   ├── data.js         Konstanta, kriteria bawaan, DATA DEMO, batas desa
 │   ├── storage.js      Sumber data Supabase + salinan LocalStorage, import/export
 │   ├── ahp.js          Mesin perhitungan AHP (murni logika)
-│   ├── app.js          Helper bersama, sidebar, toast, modal
-│   ├── gis.js          Fungsi peta Leaflet + halaman Peta GIS
-│   ├── login.js, dashboard.js, infrastruktur.js, detail.js,
-│   │   ahp-page.js, prioritas.js, laporan.js, pengaturan.js
-└── assets/logo.svg, assets/images/
+│   ├── app.js          Helper bersama, navbar, routing section, toast, modal login admin
+│   ├── gis.js          Fungsi peta Leaflet + renderer section Peta GIS
+│   ├── login.js        Pengontrol cover, slideshow, "Lihat data", pemulihan section
+│   └── dashboard.js, infrastruktur.js, detail.js, ahp-page.js,
+│       prioritas.js, laporan.js, pengaturan.js  (renderer tiap section)
+├── assets/logo.webp
+└── assets/images/   Foto latar cover (cover.jpeg) + slideshow (slide-01.jpeg ... slide-08.jpeg)
 ```
 
 ## Cara menggunakan
 
-**Login.** Admin memakai email + password yang dibuat di Supabase (lihat langkah 3 di atas). Password di-hash oleh Supabase, bukan oleh browser, dan berlaku sama di semua perangkat. **Lupa password?** klik tombolnya, lalu buka tautan yang dikirim Supabase untuk membuat password baru. Pengunjung masuk tanpa password dan hanya dapat melihat dashboard, data, peta, dan prioritas.
+**Alur satu halaman.** `index.html` disusun berurutan: **cover → slideshow foto → aplikasi**. Saat pertama dibuka, yang terlihat adalah cover penuh layar dengan foto latar ber-overlay hijau 50%, judul **SPK Prioritas Pembangunan Desa Pekutatan**, dan satu-satunya tombol: **Lihat data**. Di bawah cover ada slideshow foto tanpa bingkai, lalu di bawahnya semua menu aplikasi (Dashboard, Data Infrastruktur, Peta GIS, AHP, Prioritas, Laporan, Pengaturan, Detail) sebagai section. **Tidak ada sidebar.** Navbar sticky muncul setelah cover terlewat saat halaman digulir, dan klik menu mengganti section tanpa memuat ulang halaman.
 
-**Data bersama.** Seluruh usulan, kriteria, dan identitas laporan disimpan di satu baris tabel `spk_state` (JSONB). Salinan di LocalStorage hanya dipakai agar tampilan cepat dan sebagai cadangan saat internet putus. Setiap simpanan Admin langsung dikirim ke Supabase dan diterima pengunjung lewat Realtime.
+**Responsivitas.** Seluruh konten (cover, slideshow, navbar, dan section aplikasi) memiliki jarak aman kiri/kanan sehingga tidak menempel ke tepi layar, baik di HP maupun desktop. Di layar kecil (≤ 900 px), tautan menu dilipat ke tombol **hamburger** di navbar; ketuk untuk membuka/tutup, pilih menu untuk langsung berpindah section, atau tekan `Esc` / klik di luar panel untuk menutup. Tombol **Login Admin** / **Logout** tetap tersedia di navbar dalam bentuk ikon.
+
+**Footer.** Di bagian paling bawah halaman ada footer hitam berisi identitas aplikasi, tautan cepat ke beberapa section, tahun berjalan (diisi otomatis), dan tombol **Kembali ke atas**. Footer ikut jarak aman kiri/kanan dan disembunyikan saat mencetak laporan.
+
+**Masuk sebagai pengunjung.** Klik **Lihat data** pada cover. Sesi pengunjung dibuat, navbar langsung aktif, dan section Dashboard ditampilkan. Pengunjung hanya bisa melihat dashboard, data, peta, dan prioritas.
+
+**Foto cover & slideshow.** Foto yang sudah ada di `assets/images/` adalah `cover.jpeg` dan `slide-01.jpeg` sampai `slide-07.jpeg` (lihat `assets/images/README.txt`). File yang belum ada otomatis dilewati; sebelum foto ditaruh, latar memakai warna hijau dan slideshow memakai 3 slide placeholder. Nama file/keterangan bisa diatur lewat `COVER_IMAGE` dan `SLIDES` di `js/config.js`.
+
+**Login Admin.** Setelah navbar muncul, klik tombol **Login Admin** di sisi kanan navbar. Form email + password Supabase tampil dalam modal (tombol **Batal** / `Esc` untuk menutup). Admin memakai email + password yang dibuat di Supabase (lihat langkah 3 di atas). Password di-hash oleh Supabase, bukan oleh browser, dan berlaku sama di semua perangkat. **Lupa password?** klik tombolnya di modal, lalu buka tautan yang dikirim Supabase untuk membuat password baru. Setelah login berhasil, navbar langsung menampilkan menu admin (AHP, Laporan, Pengaturan) dan tombol **Logout** tanpa perlu memuat ulang halaman.
+
+**Data bersama.** Seluruh usulan, kriteria, dan identitas laporan disimpan di satu baris tabel `spk_state` (JSONB). Salinan di LocalStorage hanya dipakai agar tampilan cepat dan sebagai cadangan saat internet putus. Setiap simpanan Admin langsung dikirim ke Supabase dan diterima pengunjung lewat Realtime; notifikasi muncul, halaman memuat ulang, lalu section yang sedang dibuka dibuka kembali otomatis.
 
 **Admin dapat:** menambah/mengedit/menghapus usulan, mengubah kriteria dan bobot, melihat proses AHP, mencetak laporan, dan mengatur data.
 

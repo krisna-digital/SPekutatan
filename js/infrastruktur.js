@@ -296,7 +296,7 @@
   }
 
   // ---------- Inisialisasi ----------
-  App.boot(function () {
+  App.onPage('infrastruktur', function () {
     const session = App.init({ page: 'infrastruktur' });
     if (!session) return;
     isAdmin = session.role === 'admin';
@@ -373,7 +373,7 @@
     render();
 
     // Dibuka dari halaman detail: ?edit=INF-001
-    const m = /[?&]edit=([^&]+)/.exec(location.search);
-    if (m && isAdmin) openForm(decodeURIComponent(m[1]));
+    const editId = App.param('edit');
+    if (editId && isAdmin) openForm(editId);
   });
 })();

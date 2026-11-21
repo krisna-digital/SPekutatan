@@ -13,7 +13,7 @@
 
   function row(cells) { return '<tr>' + cells.map(function (c) { return '<td' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + c.v + '</td>'; }).join('') + '</tr>'; }
 
-  App.boot(function () {
+  App.onPage('laporan', function () {
     const session = App.init({ page: 'laporan', adminOnly: true });
     if (!session) return;
 
@@ -41,10 +41,10 @@
         '<td class="num"><strong>' + App.fmt4(r.final) + '</strong></td><td>' + App.catBadge(r.kategori) + '</td></tr>';
     }).join('');
 
-    const report = document.getElementById('report');
+    const report = App.$('#report');
     report.innerHTML =
       (demoCount ? '<div class="watermark-note">Catatan: laporan ini memuat ' + demoCount + ' data DEMO (bukan data resmi Desa Pekutatan). Ganti dengan data penelitian sebelum dipakai sebagai dokumen resmi.</div>' : '') +
-      '<header class="report-head"><img src="./assets/logo.svg" alt="" width="62" height="62"><div>' +
+      '<header class="report-head"><img src="./assets/logo.webp" alt="" width="62" height="62"><div>' +
         '<div class="t1">' + esc(meta.provinsi) + ' · ' + esc(meta.kabupaten) + '</div>' +
         '<h1>LAPORAN HASIL SISTEM PENDUKUNG KEPUTUSAN</h1>' +
         '<div>Prioritas Pembangunan Infrastruktur ' + esc(meta.desa) + ' (Metode AHP)</div></div></header>' +
@@ -85,7 +85,7 @@
     App.fillIcons();
 
     // Peta pada laporan
-    const mapEl = document.getElementById('rep-map');
+    const mapEl = App.$('#rep-map');
     if (GIS.leafletReady()) {
       const map = GIS.createMap(mapEl, { lite: true });
       const layer = GIS.addMarkers(map, res.alt, { link: false });
@@ -99,7 +99,7 @@
       mapEl.innerHTML = '<div class="empty">Peta tidak dapat dimuat (tidak ada koneksi internet).</div>';
     }
 
-    document.getElementById('btn-print').addEventListener('click', function () {
+    App.$('#btn-print').addEventListener('click', function () {
       // beri waktu peta menyesuaikan ukuran sebelum dialog cetak
       window.dispatchEvent(new Event('beforeprint'));
       setTimeout(function () { window.print(); }, 450);

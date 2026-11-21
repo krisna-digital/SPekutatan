@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  App.boot(function () {
+  App.onPage('dashboard', function () {
     const session = App.init({ page: 'dashboard' });
     if (!session) return;
 
@@ -17,20 +17,20 @@
     const count = { tinggi: 0, sedang: 0, rendah: 0 };
     res.alt.forEach(function (r) { count[r.kategori]++; });
 
-    document.getElementById('st-total').textContent = res.alt.length;
-    document.getElementById('st-tinggi').textContent = count.tinggi;
-    document.getElementById('st-sedang').textContent = count.sedang;
-    document.getElementById('st-rendah').textContent = count.rendah;
+    App.$('#st-total').textContent = res.alt.length;
+    App.$('#st-tinggi').textContent = count.tinggi;
+    App.$('#st-sedang').textContent = count.sedang;
+    App.$('#st-rendah').textContent = count.rendah;
 
     // Status konsistensi AHP (ringkas)
     const c = res.criteria;
-    const chip = document.getElementById('cr-chip');
+    const chip = App.$('#cr-chip');
     const link = session.role === 'admin' ? './ahp.html' : null;
     const label = '<span class="badge ' + (c.consistent ? 'rendah' : 'tinggi') + '">CR ' + App.fmt3(c.CR) + ' · ' + (c.consistent ? 'Konsisten' : 'Tidak Konsisten') + '</span>';
     chip.innerHTML = link ? '<a href="' + link + '" style="text-decoration:none" title="Lihat proses AHP">' + label + '</a>' : label;
 
     // 5 teratas
-    const body = document.getElementById('top-body');
+    const body = App.$('#top-body');
     if (!res.alt.length) {
       body.innerHTML = '<tr><td colspan="4"><div class="empty">Belum ada data usulan.</div></td></tr>';
     } else {
@@ -43,7 +43,7 @@
     }
 
     // Peta ringkas
-    const mapEl = document.getElementById('dash-map');
+    const mapEl = App.$('#dash-map');
     if (GIS.leafletReady()) {
       const map = GIS.createMap(mapEl, { lite: true });
       const layer = GIS.addMarkers(map, res.alt);
@@ -57,7 +57,7 @@
     // Grafik
     if (typeof Chart === 'undefined') {
       ['chart-dist', 'chart-jenis'].forEach(function (id) {
-        const box = document.getElementById(id).parentNode;
+        const box = App.$('#' + id).parentNode;
         box.innerHTML = '<div class="empty">Pustaka grafik gagal dimuat. Periksa koneksi internet.</div>';
       });
       return;
@@ -65,7 +65,7 @@
     Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
     Chart.defaults.color = '#475569';
 
-    new Chart(document.getElementById('chart-dist'), {
+    new Chart(App.$('#chart-dist'), {
       type: 'doughnut',
       data: {
         labels: ['Prioritas Tinggi', 'Prioritas Sedang', 'Prioritas Rendah'],
@@ -84,7 +84,7 @@
     const perJenis = Data.JENIS.map(function (j) {
       return res.alt.filter(function (r) { return r.item.jenis === j; }).length;
     });
-    new Chart(document.getElementById('chart-jenis'), {
+    new Chart(App.$('#chart-jenis'), {
       type: 'bar',
       data: {
         labels: Data.JENIS,

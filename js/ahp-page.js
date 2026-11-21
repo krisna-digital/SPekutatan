@@ -245,7 +245,7 @@
     renderAlternatives(res);
   }
 
-  App.boot(function () {
+  App.onPage('ahp', function () {
     const session = App.init({ page: 'ahp', adminOnly: true });
     if (!session) return;
     SAATY = AHP.saatyValues();
