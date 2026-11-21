@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard · SPK Pekutatan</title>
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="booting" data-page="dashboard">
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama"></aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main class="content" id="content">
+        <div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><span aria-current="page">Beranda</span></nav>
+            <h1>Dashboard</h1>
+            <p>Ringkasan prioritas pembangunan infrastruktur Desa Pekutatan.</p>
+          </div>
+          <div id="cr-chip"></div>
+        </div>
+
+        <section class="grid grid-4" aria-label="Ringkasan">
+          <div class="card stat"><div class="stat-ic"><span data-ic="layers" data-size="22"></span></div><div><div class="stat-label">Total Usulan</div><div class="stat-value" id="st-total">0</div></div></div>
+          <div class="card stat"><div class="stat-ic tinggi"><span data-ic="alertcircle" data-size="22"></span></div><div><div class="stat-label">Prioritas Tinggi</div><div class="stat-value" id="st-tinggi">0</div></div></div>
+          <div class="card stat"><div class="stat-ic sedang"><span data-ic="list" data-size="22"></span></div><div><div class="stat-label">Prioritas Sedang</div><div class="stat-value" id="st-sedang">0</div></div></div>
+          <div class="card stat"><div class="stat-ic rendah"><span data-ic="check" data-size="22"></span></div><div><div class="stat-label">Prioritas Rendah</div><div class="stat-value" id="st-rendah">0</div></div></div>
+        </section>
+
+        <section class="grid grid-3-2" style="margin-top:18px">
+          <div class="card">
+            <div class="card-head"><h2>Peta Ringkas Lokasi Pembangunan</h2><a class="btn btn-sm" href="./gis.html">Buka peta penuh</a></div>
+            <div class="card-body"><div id="dash-map" class="map mini-map" aria-label="Peta ringkas"></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Distribusi Prioritas</h2></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chart-dist" aria-label="Grafik distribusi prioritas" role="img"></canvas></div></div>
+          </div>
+        </section>
+
+        <section class="grid grid-2" style="margin-top:18px">
+          <div class="card">
+            <div class="card-head"><h2>Jumlah Infrastruktur per Kategori</h2></div>
+            <div class="card-body"><div class="chart-box"><canvas id="chart-jenis" aria-label="Grafik jumlah infrastruktur per jenis" role="img"></canvas></div></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>5 Prioritas Teratas</h2><a class="btn btn-sm" href="./prioritas.html">Lihat semua</a></div>
+            <div class="table-wrap">
+              <table class="table">
+                <thead><tr><th>#</th><th class="name">Infrastruktur</th><th class="num">Nilai</th><th>Status</th></tr></thead>
+                <tbody id="top-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/ahp.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/app.js"></script>
+  <script src="./js/gis.js"></script>
+  <script src="./js/dashboard.js"></script>
+</body>
+</html>

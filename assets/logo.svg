@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Logo SPK Prioritas Pembangunan Desa Pekutatan">
+  <rect width="64" height="64" rx="14" fill="#0f766e"/>
+  <path d="M32 9c-8.3 0-15 6.5-15 14.6C17 34.8 32 49 32 49s15-14.2 15-25.4C47 15.5 40.3 9 32 9z" fill="#fff"/>
+  <circle cx="32" cy="23.5" r="5.5" fill="#0f766e"/>
+  <rect x="15" y="52" width="8" height="5" rx="1.5" fill="#99f6e4"/>
+  <rect x="28" y="52" width="8" height="5" rx="1.5" fill="#fde68a"/>
+  <rect x="41" y="52" width="8" height="5" rx="1.5" fill="#fca5a5"/>
+</svg>

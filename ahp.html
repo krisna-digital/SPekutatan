@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perhitungan AHP · SPK Pekutatan</title>
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="booting" data-page="ahp">
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama"></aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main class="content" id="content">
+        <div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Perhitungan AHP</span></nav>
+            <h1>Perhitungan AHP</h1>
+            <p>Atur kriteria dan perbandingan berpasangan. Seluruh tahapan dihitung otomatis oleh JavaScript dan tersimpan di browser.</p>
+          </div>
+          <div class="btn-row"><button type="button" class="btn" id="btn-reset"><span data-ic="reset" data-size="18"></span> Reset ke bawaan</button></div>
+        </div>
+
+        <div id="cr-alert"></div>
+
+        <div class="card">
+          <div class="card-head"><h2>1. Kelola Kriteria</h2></div>
+          <div class="card-body">
+            <p class="muted small">Nama, arah preferensi (benefit/cost), dan keterangan kriteria dapat diubah. Setiap kriteria terhubung ke satu isian pada data infrastruktur.</p>
+            <div id="crit-editor"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>2. Matriks Perbandingan Berpasangan</h2></div>
+          <div class="card-body">
+            <p class="small muted">Baca: kriteria pada <strong>baris</strong> dibandingkan dengan kriteria pada <strong>kolom</strong>. Nilai lebih dari 1 berarti baris lebih penting; pecahan (mis. 1/3) berarti kolom lebih penting. Kolom di bawah diagonal terisi otomatis (kebalikannya). Perubahan langsung dihitung ulang dan disimpan.</p>
+            <div class="table-wrap"><div id="matrix-editor"></div></div>
+            <details style="margin-top:12px">
+              <summary style="cursor:pointer;font-weight:600;min-height:var(--tap);display:flex;align-items:center">Skala perbandingan Saaty</summary>
+              <div class="table-wrap">
+                <table class="table matrix" style="margin-top:6px">
+                  <thead><tr><th>Nilai</th><th>Keterangan</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td style="text-align:left">Sama penting</td></tr>
+                    <tr><td>3</td><td style="text-align:left">Sedikit lebih penting</td></tr>
+                    <tr><td>5</td><td style="text-align:left">Lebih penting</td></tr>
+                    <tr><td>7</td><td style="text-align:left">Sangat lebih penting</td></tr>
+                    <tr><td>9</td><td style="text-align:left">Mutlak lebih penting</td></tr>
+                    <tr><td>2, 4, 6, 8</td><td style="text-align:left">Nilai tengah di antara dua penilaian berdekatan</td></tr>
+                    <tr><td>1/3, 1/5, ...</td><td style="text-align:left">Kebalikan: kriteria kolom lebih penting dari kriteria baris</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <h2 style="margin:26px 0 12px">Proses Perhitungan Bobot Kriteria</h2>
+        <div id="steps"></div>
+
+        <h2 style="margin:26px 0 12px">Perhitungan Nilai Alternatif</h2>
+        <div id="alt-steps"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/ahp.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/app.js"></script>
+  <script src="./js/ahp-page.js"></script>
+</body>
+</html>

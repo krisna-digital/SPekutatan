@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Peta Prioritas Pembangunan · SPK Pekutatan</title>
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="booting" data-page="gis">
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama"></aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main class="content" id="content">
+        <div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Peta GIS</span></nav>
+            <h1>Peta Prioritas Pembangunan</h1>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="filter-bar" role="group" aria-label="Filter peta">
+            <button type="button" class="chip-toggle" data-cat="tinggi" aria-pressed="true"><i style="background:#dc2626"></i>Prioritas Tinggi</button>
+            <button type="button" class="chip-toggle" data-cat="sedang" aria-pressed="true"><i style="background:#f59e0b"></i>Prioritas Sedang</button>
+            <button type="button" class="chip-toggle" data-cat="rendah" aria-pressed="true"><i style="background:#16a34a"></i>Prioritas Rendah</button>
+            <select id="f-jenis" aria-label="Filter jenis infrastruktur" style="width:auto;min-width:180px"></select>
+            <button type="button" class="btn btn-sm" id="btn-reset-filter">Reset filter</button>
+            <span class="muted small" id="count-line" style="margin-left:auto"></span>
+          </div>
+          <div id="map" class="map map-full" aria-label="Peta lokasi pembangunan"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/ahp.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/app.js"></script>
+  <script src="./js/gis.js"></script>
+</body>
+</html>

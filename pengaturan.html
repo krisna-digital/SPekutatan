@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pengaturan · SPK Pekutatan</title>
+  <link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body class="booting" data-page="pengaturan">
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama"></aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+      <main class="content" id="content">
+        <div class="page-head">
+          <div>
+            <nav class="breadcrumb" aria-label="Breadcrumb"><a href="./dashboard.html">Beranda</a><span class="sep"></span><span aria-current="page">Pengaturan</span></nav>
+            <h1>Pengaturan</h1>
+            <p>Identitas laporan, password admin, serta pengelolaan data aplikasi.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="align-items:start">
+          <div class="stack">
+            <section class="card">
+              <div class="card-head"><h2>Identitas Desa &amp; Periode Laporan</h2></div>
+              <form class="card-body" id="form-meta" novalidate>
+                <div class="form-grid">
+                  <div class="field"><label for="m-desa">Desa</label><input type="text" id="m-desa" maxlength="80"></div>
+                  <div class="field"><label for="m-kec">Kecamatan</label><input type="text" id="m-kec" maxlength="80"></div>
+                  <div class="field"><label for="m-kab">Kabupaten</label><input type="text" id="m-kab" maxlength="80"></div>
+                  <div class="field"><label for="m-prov">Provinsi</label><input type="text" id="m-prov" maxlength="80"></div>
+                  <div class="field full"><label for="m-periode">Periode penilaian</label><input type="text" id="m-periode" maxlength="80" placeholder="mis. Tahun Anggaran 2026"></div>
+                  <div class="field full"><label for="m-penyusun">Nama penyusun (untuk tanda tangan laporan)</label><input type="text" id="m-penyusun" maxlength="80"></div>
+                </div>
+                <div class="btn-row" style="margin-top:16px"><button type="submit" class="btn btn-primary">Simpan identitas</button></div>
+              </form>
+            </section>
+
+            <section class="card">
+              <div class="card-head"><h2>Ganti Password Admin</h2></div>
+              <p class="muted small" style="margin:12px 20px 0">Password dikelola Supabase Auth dan berlaku untuk admin di semua perangkat.</p>
+              <form class="card-body" id="form-pass" autocomplete="off" novalidate>
+                <div class="form-grid">
+                  <div class="field full"><label for="p-old">Password saat ini</label><input type="password" id="p-old" autocomplete="current-password"></div>
+                  <div class="field"><label for="p-new">Password baru (min. 6 karakter)</label><input type="password" id="p-new" autocomplete="new-password"></div>
+                  <div class="field"><label for="p-new2">Ulangi password baru</label><input type="password" id="p-new2" autocomplete="new-password"></div>
+                </div>
+                <div class="err" id="p-err" role="alert" style="color:var(--tinggi-fg);margin-top:8px;font-size:.85rem"></div>
+                <div class="btn-row" style="margin-top:12px"><button type="submit" class="btn btn-primary">Ganti password</button></div>
+              </form>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card-head"><h2>Manajemen Data</h2></div>
+            <div class="card-body">
+              <div class="setting-row">
+                <div class="info"><strong>Export Data</strong><span class="muted small">Unduh seluruh data usulan, kriteria, bobot, dan identitas sebagai file JSON (cadangan).</span></div>
+                <button type="button" class="btn" id="btn-export"><span data-ic="download" data-size="18"></span> Export JSON</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Import Data</strong><span class="muted small">Pulihkan dari file JSON hasil export. Data saat ini akan diganti; ranking dihitung ulang.</span></div>
+                <button type="button" class="btn" id="btn-import"><span data-ic="upload" data-size="18"></span> Import JSON</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Kembalikan data demo</strong><span class="muted small">Mengganti seluruh data dan kriteria dengan data demo bawaan.</span></div>
+                <button type="button" class="btn" id="btn-demo"><span data-ic="reset" data-size="18"></span> Pulihkan demo</button>
+              </div>
+              <div class="setting-row">
+                <div class="info"><strong>Kosongkan data usulan</strong><span class="muted small">Menghapus semua usulan agar siap diisi data penelitian. Kriteria dan bobot tetap.</span></div>
+                <button type="button" class="btn btn-danger" id="btn-clear"><span data-ic="trash" data-size="18"></span> Kosongkan</button>
+              </div>
+              <div class="alert alert-info" style="margin:16px 0 0">
+                <div><strong>Penyimpanan di browser</strong><p>Data tersimpan di LocalStorage perangkat ini saja. Gunakan Export secara berkala sebagai cadangan, dan untuk memindahkan data antarperangkat.</p></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/data.js"></script>
+  <script src="./js/ahp.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/app.js"></script>
+  <script src="./js/pengaturan.js"></script>
+</body>
+</html>
