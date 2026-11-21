@@ -15,15 +15,15 @@
 
   root.SPK_CONFIG = {
     // Project Settings → API → Project URL
-    SUPABASE_URL: 'https://YOUR_PROJECT_REF.supabase.co',
+    SUPABASE_URL: 'https://lmmrwhrnbgivczxazofd.supabase.co',
 
     // Project Settings → API → Project API keys → anon public
-    SUPABASE_ANON_KEY: 'YOUR_ANON_PUBLIC_KEY',
+    SUPABASE_ANON_KEY: 'sb_publishable_w0GEylvfdAs5B37-5fikzw_G84RZ8NG',
 
     // Nama tabel penyimpanan state aplikasi (lihat SQL di README)
     STATE_TABLE: 'spk_state',
 
     // Email admin yang dibuat di Supabase → Authentication → Users
-    ADMIN_EMAIL: 'admin@peku.local'
+    ADMIN_EMAIL: 'admin@pekutatan.co.id'
   };
 })(window);
