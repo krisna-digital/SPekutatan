@@ -165,13 +165,15 @@ Jika data pengunjung tidak berubah: pastikan di **Table Editor → spk_state** a
 
 ## Cara menggunakan
 
-**Alur satu halaman.** `index.html` disusun berurutan: **cover → slideshow foto → aplikasi**. Saat pertama dibuka, yang terlihat adalah cover penuh layar dengan foto latar ber-overlay hijau 50%, judul **SPK Prioritas Pembangunan Desa Pekutatan**, dan satu-satunya tombol: **Lihat data**. Di bawah cover ada slideshow foto tanpa bingkai, lalu di bawahnya semua menu aplikasi (Dashboard, Data Infrastruktur, Peta GIS, AHP, Prioritas, Laporan, Pengaturan, Detail) sebagai section. **Tidak ada sidebar.** Navbar sticky muncul setelah cover terlewat saat halaman digulir, dan klik menu mengganti section tanpa memuat ulang halaman.
+**Alur satu halaman.** `index.html` disusun berurutan: **cover → slideshow foto → aplikasi**. Saat pertama dibuka, yang terlihat adalah cover penuh layar dengan foto latar ber-overlay hijau 50%, judul **SPK Prioritas Pembangunan Desa Pekutatan**, dan satu-satunya tombol: **Lihat data**. Di bawah cover ada slideshow foto tanpa bingkai, lalu di bawahnya semua menu aplikasi (Dashboard, Data Infrastruktur, Peta GIS, AHP, Prioritas, Laporan, Pengaturan, Detail) sebagai section. **Tidak ada sidebar.**
+
+**Data selalu tampil.** Section Dashboard sudah dirender sejak halaman selesai dimuat, jadi pengguna boleh langsung menggulir melewati cover tanpa menekan tombol apa pun — data tetap terlihat. Tombol **Lihat data** hanya menggulir halus ke section Dashboard. Navbar **tidak tampil di cover** dan mulai tampil (sticky) tepat setelah cover terlewat. Klik menu navbar mengganti section tanpa memuat ulang halaman. Jika Supabase lambat atau tidak dapat dijangkau, salinan data lokal langsung dipakai agar halaman tidak kosong.
 
 **Responsivitas.** Seluruh konten (cover, slideshow, navbar, dan section aplikasi) memiliki jarak aman kiri/kanan sehingga tidak menempel ke tepi layar, baik di HP maupun desktop. Di layar kecil (≤ 900 px), tautan menu dilipat ke tombol **hamburger** di navbar; ketuk untuk membuka/tutup, pilih menu untuk langsung berpindah section, atau tekan `Esc` / klik di luar panel untuk menutup. Tombol **Login Admin** / **Logout** tetap tersedia di navbar dalam bentuk ikon.
 
 **Footer.** Di bagian paling bawah halaman ada footer hitam berisi identitas aplikasi, tautan cepat ke beberapa section, tahun berjalan (diisi otomatis), dan tombol **Kembali ke atas**. Footer ikut jarak aman kiri/kanan dan disembunyikan saat mencetak laporan.
 
-**Masuk sebagai pengunjung.** Klik **Lihat data** pada cover. Sesi pengunjung dibuat, navbar langsung aktif, dan section Dashboard ditampilkan. Pengunjung hanya bisa melihat dashboard, data, peta, dan prioritas.
+**Melihat sebagai pengunjung.** Data sudah terlihat saat halaman digulir. Klik **Lihat data** pada cover bila ingin langsung melompat ke section Dashboard. Pengunjung bisa melihat dashboard, data, peta, dan prioritas; menu khusus admin (AHP, Laporan, Pengaturan) tetap tersembunyi.
 
 **Foto cover & slideshow.** Foto yang sudah ada di `assets/images/` adalah `cover.jpeg` dan `slide-01.jpeg` sampai `slide-07.jpeg` (lihat `assets/images/README.txt`). File yang belum ada otomatis dilewati; sebelum foto ditaruh, latar memakai warna hijau dan slideshow memakai 3 slide placeholder. Nama file/keterangan bisa diatur lewat `COVER_IMAGE` dan `SLIDES` di `js/config.js`.
 

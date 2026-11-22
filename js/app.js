@@ -349,17 +349,21 @@
       '<button type="button" class="hamburger nav-toggle" id="nav-toggle" aria-label="Buka menu" aria-controls="site-nav-links" aria-expanded="false">' + icon('menu', 22) + '</button>' +
       '</div>';
 
+    // Pasang langsung pada tombol agar tap di HP tidak bergantung pada event delegation.
+    const toggle = document.getElementById('nav-toggle');
+    if (toggle) toggle.addEventListener('click', function () {
+      setNavMenu(!bar.classList.contains('menu-open'));
+    });
+
     bar.onclick = function (e) {
-      if (e.target.closest && e.target.closest('#nav-toggle')) {
-        setNavMenu(!bar.classList.contains('menu-open'));
-        return;
-      }
       const link = e.target.closest ? e.target.closest('.nav-link') : null;
       if (link) { setNavMenu(false); showPage(link.getAttribute('data-page')); return; }
       if (e.target.closest && e.target.closest('#nav-top')) { setNavMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
       if (e.target.closest && e.target.closest('#nav-admin-login')) { setNavMenu(false); openAdminLogin(); return; }
       if (e.target.closest && e.target.closest('#nav-logout')) { setNavMenu(false); logout(); }
     };
+
+    setNavMenu(false);
   }
 
   /** Tampilkan satu section aplikasi dan sembunyikan yang lain. */
@@ -372,14 +376,10 @@
     opts = opts || {};
     const node = document.getElementById('page-' + page);
     if (!node || PAGE_FILES.indexOf(page) < 0) return;
-    const session = root.Store.getSession();
+    // Data bersifat publik: pengunjung tanpa sesi tetap boleh melihat semua section.
+    const session = root.Store.getSession() || { role: 'user', nama: 'Pengunjung' };
     const navItem = NAV.filter(function (n) { return n.id === page; })[0];
 
-    if (!session) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast('Klik "Lihat data" untuk masuk.', 'warn');
-      return;
-    }
     if (navItem && navItem.admin && session.role !== 'admin') {
       toast('Halaman tersebut hanya untuk Admin.', 'warn');
       return;
@@ -429,16 +429,29 @@
 
   /** Navbar tersembunyi di cover, muncul sticky setelah cover terlewat. */
   function setupNavbarReveal() {
-    const sentinel = document.getElementById('nav-sentinel');
     const bar = document.getElementById('site-navbar');
-    if (!sentinel || !bar || !('IntersectionObserver' in root)) return;
-    const io = new IntersectionObserver(function (entries) {
-      const show = !entries[0].isIntersecting;
+    const cover = document.getElementById('cover');
+    if (!bar || !cover) return;
+
+    let ticking = false;
+    function update() {
+      ticking = false;
+      // Tepat di bawah cover navbar mulai tampil (termasuk saat halaman di-refresh
+      // pada posisi scroll tertentu).
+      const batas = Math.max(0, cover.offsetTop + cover.offsetHeight - 4);
+      const show = window.scrollY >= batas;
       bar.classList.toggle('visible', show);
       document.body.classList.toggle('nav-visible', show);
       if (!show) setNavMenu(false);
-    }, { threshold: 0 });
-    io.observe(sentinel);
+    }
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      root.requestAnimationFrame(update);
+    }
+    root.addEventListener('scroll', onScroll, { passive: true });
+    root.addEventListener('resize', onScroll, { passive: true });
+    update();
 
     // Tutup panel hamburger saat klik di luar navbar atau menekan Escape.
     document.addEventListener('click', function (e) {
@@ -449,6 +462,14 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && bar.classList.contains('menu-open')) setNavMenu(false);
     });
+
+    // Kembali ke layout desktop: tutup panel dan kembalikan ikon hamburger.
+    const mq = root.matchMedia ? root.matchMedia('(max-width: 900px)') : null;
+    if (mq) {
+      const onMode = function () { if (!mq.matches) setNavMenu(false); };
+      if (mq.addEventListener) mq.addEventListener('change', onMode);
+      else if (mq.addListener) mq.addListener(onMode);
+    }
   }
 
   /** Footer: tahun otomatis, tautan cepat, dan tombol kembali ke atas. */
@@ -473,6 +494,11 @@
     setupLinkRouting();
     setupFooter();
     renderNavbar(root.Store.getSession());
+
+    // Section Dashboard langsung aktif sejak awal. Halamannya tetap berada di
+    // cover, jadi pengguna yang menggulir tanpa menekan "Lihat data" tetap
+    // melihat data, sedangkan tombol "Lihat data" hanya menggulir ke Dashboard.
+    if (!currentPage) showPage('dashboard', {}, { scroll: false });
   }
 
   // ---------- Perhitungan AHP terpusat ----------
@@ -579,9 +605,9 @@
    * @returns {Object|null} sesi pengguna, atau null bila dialihkan
    */
   function init(opts) {
-    const session = root.Store.getSession();
+    // Sesi tidak lagi diperlukan untuk membaca data. Defaultnya adalah pengunjung.
+    const session = root.Store.getSession() || { role: 'user', nama: 'Pengunjung', at: Date.now() };
     const spa = isSpa();
-    if (!session) { if (!spa) location.replace('./index.html'); return null; }
     if (opts.adminOnly && session.role !== 'admin') {
       if (spa) { toast('Halaman tersebut hanya untuk Admin.', 'warn'); return null; }
       root.Store.setSession(session);
@@ -683,17 +709,27 @@
       let tasks;
       try {
         tasks = [root.Store.ready()];
-        if (root.SPKCloud && root.SPKCloud.authReady) tasks.push(root.SPKCloud.authReady());
+        if (root.SPKCloud && root.SPKCloud.authReady) {
+          tasks.push(Promise.race([
+            root.SPKCloud.authReady(),
+            new Promise(function (resolve) { setTimeout(resolve, 1500); })
+          ]));
+        }
       } catch (err) {
         console.error('Gagal menyiapkan data:', err);
         startSpa();
+        document.body.classList.remove('booting');
         fn();
         return;
       }
-      Promise.all(tasks).then(function () { startSpa(); fn(); }).catch(function (err) {
-        console.error('Gagal menyiapkan data:', err);
+      const finish = function () {
         startSpa();
+        document.body.classList.remove('booting');
         fn();
+      };
+      Promise.all(tasks).then(finish, function (err) {
+        console.error('Gagal menyiapkan data:', err);
+        finish();
       });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });

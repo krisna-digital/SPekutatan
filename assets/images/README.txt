@@ -19,6 +19,10 @@ Bisa juga JPG/PNG/WEBP; jika nama beda, ubah COVER_IMAGE di js/config.js.
 Disarankan: foto landscape lebar, minimal 1600 px, komposisi kosong di
 tengah/kiri agar judul dan tombol tetap mudah dibaca.
 
+Untuk cover, MP4 juga didukung. Simpan sebagai cover.mp4 atau ubah COVER_IMAGE
+ke nama file MP4 yang diinginkan di js/config.js. Video akan diputar otomatis,
+diam (muted), berulang, dan mengisi layar penuh.
+
 
 2. FOTO SLIDESHOW (pengganti foto bupati pada contoh)
 -----------------------------------------------------

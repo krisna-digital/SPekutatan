@@ -31,9 +31,9 @@
       'krisnadiskominfo@gmail.com'
     ],
 
-    // Foto latar cover. Taruh file di assets/images/cover.jpg
-    // (boleh jpg/png/webp). Jika belum ada, latar memakai warna hijau.
-    COVER_IMAGE: './assets/images/cover.jpeg',
+    // Media latar cover. Taruh foto/video di assets/images/.
+    // Boleh cover.jpg/png/webp atau cover.mp4/webm/ogg.
+    COVER_IMAGE: './assets/images/cover.webp',
 
     // Foto slideshow di halaman awal. Taruh file di folder assets/images/
     // dengan nama slide-01.jpg ... slide-08.jpg (boleh jpg/png/webp).

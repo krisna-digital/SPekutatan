@@ -3,7 +3,8 @@
  * ---------------------------------------------------------------
  * Pengontrol halaman awal / satu halaman aplikasi.
  *  - Cover → slideshow foto → section aplikasi (navbar muncul setelah cover).
- *  - "Lihat data" membuat sesi pengunjung lalu membuka section Dashboard.
+ *  - Data langsung terlihat saat halaman digulir; "Lihat data" hanya menggulir
+ *    ke section Dashboard.
  *  - Login Admin tersedia di navbar, bukan di cover (dikelola di app.js).
  *  - Form ganti password hanya muncul saat tautan reset Supabase dibuka.
  * ---------------------------------------------------------------
@@ -48,19 +49,49 @@
     const landing = $('landing-actions');
 
     function enterVisitor() {
+      // Data sudah dirender sejak boot. Tombol ini hanya menggulir ke Dashboard.
+      if (spa) {
+        App.showPage('dashboard', {}, {});
+        return;
+      }
       Store.setSession({ role: 'user', nama: 'Pengunjung', at: Date.now() });
-      if (spa) openRequested('dashboard');
-      else location.href = './dashboard.html';
+      location.href = './dashboard.html';
     }
 
-    // ---------- Foto latar cover (overlay hijau 50% diatur di CSS) ----------
+    // ---------- Media latar cover (foto atau video MP4) ----------
     const cover = $('cover');
     const coverSrc = (window.SPK_CONFIG && SPK_CONFIG.COVER_IMAGE) || './assets/images/cover.jpg';
-    const coverProbe = new Image();
-    coverProbe.onload = function () {
-      cover.style.backgroundImage = 'url("' + String(coverSrc).replace(/"/g, '%22') + '")';
-    };
-    coverProbe.src = coverSrc;
+    const isCoverVideo = /\.(mp4|webm|ogg)(?:$|[?#])/i.test(coverSrc);
+
+    if (isCoverVideo) {
+      cover.style.backgroundImage = '';
+      const coverVideo = document.createElement('video');
+      coverVideo.className = 'cover-video';
+      coverVideo.muted = true;
+      coverVideo.loop = true;
+      coverVideo.autoplay = true;
+      coverVideo.playsInline = true;
+      coverVideo.preload = 'auto';
+      coverVideo.setAttribute('aria-hidden', 'true');
+
+      const source = document.createElement('source');
+      source.src = coverSrc;
+      source.type = /\.webm(?:$|[?#])/i.test(coverSrc) ? 'video/webm' : (/\.ogg(?:$|[?#])/i.test(coverSrc) ? 'video/ogg' : 'video/mp4');
+      coverVideo.appendChild(source);
+      cover.insertBefore(coverVideo, cover.firstChild);
+
+      coverVideo.addEventListener('error', function () {
+        coverVideo.remove();
+      }, { once: true });
+
+      coverVideo.play().catch(function () { /* Browser membatasi autoplay; video tetap muted. */ });
+    } else {
+      const coverProbe = new Image();
+      coverProbe.onload = function () {
+        cover.style.backgroundImage = 'url("' + String(coverSrc).replace(/"/g, '%22') + '")';
+      };
+      coverProbe.src = coverSrc;
+    }
 
     // ---------- Slideshow foto ----------
     function makePlaceholder(text, from, to) {

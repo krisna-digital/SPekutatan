@@ -176,14 +176,18 @@
       });
       root.SPKCloud.subscribe(function (remote) { applyRemote(remote, true); });
 
-      readyPromise = root.SPKCloud.pullState().then(function (remote) {
+      const cloud = root.SPKCloud.pullState().then(function (remote) {
         if (remote) applyRemote(remote, false);
         else if (root.SPKCloud.isAdmin()) return root.SPKCloud.pushState(state).catch(function () { return false; });
         return true;
       }).catch(function (err) {
         console.warn('Supabase tidak dapat dijangkau; memakai salinan lokal.', err);
         return false;
-      }).then(function () { return state; });
+      });
+      // Jangan biarkan boot menggantung saat jaringan lambat: salinan lokal
+      // tetap dipakai, data cloud menyusul lewat realtime saat tersedia.
+      const timeout = new Promise(function (resolve) { setTimeout(function () { resolve(false); }, 3000); });
+      readyPromise = Promise.race([cloud, timeout]).then(function () { return state; });
     }
     return readyPromise;
   }
